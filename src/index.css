@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Fredoka:wght@300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300..700;1,300..700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+@import "tailwindcss";
+@theme {
+    --color-primary: #E8792E;
+    --color-primary-hover: #C96A28;
+    --color-dark: #1E2432;
+    --color-bgLight: #F5F9FA;
+    --color-customBg: #F5E6D8;
+    --color-text-primary: #1F2430;
+    --color-text-secondary: #8B93A1;
+    --color-customBorder: #DCE1E7;
+    --color-success-text: #16A34A;
+    --color-success-bg: #DCFCE3;
+    --color-warning-text: #B45309;
+    --color-warning-bg: #FEF3C7;
+    --color-danger-text: #DC2626;
+    --color-danger-bg: #FEE2E2;
+}
+
+body {
+    background-color: var(--color-bgLight);
+    color: var(--color-text-primary);
+    font-family: system-ui, -apple-system, sans-serif;
+}
+
+
+/* h1,
+h2,
+h3,
+h4 {
+    font-family: 'Cormorant Garamond', serif;
+} */
+
+p,
+li,
+a,
+button {
+    font-family: "Fredoka", sans-serif;
+    font-optical-sizing: auto;
+}
