@@ -98,6 +98,45 @@
       "nin": "12345678910",
       "wasceFileName": "WASCE_Statement_of_Result.pdf",
       "jambSlipFileName": "JAMB_UTME_Result_Slip.pdf"
+    },
+    {
+      "id": "-afCzryCylA",
+      "status": "Pending",
+      "score": "85% High",
+      "submittedAt": "2026-09-23T18:11:22.683Z",
+      "userId": "gu9ei3VgYLI",
+      "name": "blessing ben",
+      "email": "blessingben@gmail.com",
+      "contactEmail": "blessingben@gmail.com",
+      "phone": "+2348106571613",
+      "phoneNumber": "+2348106571613",
+      "program": "B.Sc. Accounting",
+      "course": "B.Sc. Accounting",
+      "university": "Covenant University (CU)",
+      "jambScore": 400,
+      "jambRegNumber": "123456789000",
+      "secondarySchool": "Fred Highschool",
+      "graduationYear": "2025",
+      "selectedSubjects": [
+        "Agricultural Science",
+        "Accounting",
+        "Arabic",
+        "Art"
+      ],
+      "guardianName": "daddy my",
+      "guardianPhone": "+2348106571613",
+      "guardianEmail": "daddy@gmail.com",
+      "guardianAddress": "November Street, Abuja, Nigeria",
+      "relationship": "Father",
+      "state": "FCT",
+      "lga": "abuja",
+      "citizenship": "Nigeria",
+      "homeAddress": "November Street, Abuja, Nigeria",
+      "dob": "2026-09-23",
+      "gender": "Male",
+      "nin": "12345678910",
+      "wasceFileName": "WASCE_Statement_of_Result.pdf",
+      "jambSlipFileName": "JAMB_UTME_Result_Slip.pdf"
     }
   ],
   "users": [
@@ -168,6 +207,15 @@
       "role": "applicant",
       "institution": "",
       "createdAt": "2026-09-23T17:25:02.453Z"
+    },
+    {
+      "id": "gu9ei3VgYLI",
+      "fullName": "blessing ben",
+      "email": "blessingben@gmail.com",
+      "password": "blessing",
+      "role": "applicant",
+      "institution": "",
+      "createdAt": "2026-09-23T18:08:19.264Z"
     }
   ],
   "drafts": [],

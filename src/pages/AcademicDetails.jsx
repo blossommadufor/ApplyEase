@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useFormik } from "formik";
 import * as Yup from "yup";
@@ -73,6 +73,18 @@ export const AcademicDetails = () => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [wasceFile, setWasceFile] = useState(formData.wasceFile || null);
   const [jambSlipFile, setJambSlipFile] = useState(formData.jambSlipFile || null);
+  const dropdownRef = useRef(null);
+
+  // Close subject dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const formik = useFormik({
     initialValues: {
@@ -84,13 +96,14 @@ export const AcademicDetails = () => {
       jambScore: formData.jambScore || "",
       selectedSubjects: formData.selectedSubjects || [],
     },
-    enableReinitialize: true,
     validationSchema: academicDetailsSchema,
     onSubmit: (values) => {
       updateFormData({
         ...values,
         secondarySchool: values.schoolName,
         graduationYear: values.yearOfGraduation,
+        wasceFileName: wasceFile?.name || formData.wasceFileName,
+        jambSlipFileName: jambSlipFile?.name || formData.jambSlipFileName,
       });
 
       navigate("/onboarding/guardian-data");
@@ -109,7 +122,7 @@ export const AcademicDetails = () => {
       updated = [...current, subject];
     }
     formik.setFieldValue("selectedSubjects", updated);
-    updateFormData({ selectedSubjects: updated });
+    formik.setFieldTouched("selectedSubjects", true, false);
   };
 
   const handleFileDrop = (e) => {
@@ -451,7 +464,7 @@ export const AcademicDetails = () => {
           </div>
 
           {/* JAMB Subject Combination Selector */}
-          <div className="space-y-2 pt-2 relative">
+          <div ref={dropdownRef} className="space-y-2 pt-2 relative">
             <label className="block text-xs sm:text-sm font-semibold text-[#1F2430]">
               JAMB Subject Combination{" "}
               <span className="text-[#E8792E] font-bold">
@@ -460,9 +473,10 @@ export const AcademicDetails = () => {
               <span className="text-rose-500">*</span>
             </label>
 
-            <div
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className={`w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-xs sm:text-sm flex items-center justify-between cursor-pointer transition ${
+            <button
+              type="button"
+              onClick={() => setIsDropdownOpen((prev) => !prev)}
+              className={`w-full px-4 py-2.5 bg-slate-50 border rounded-xl text-xs sm:text-sm flex items-center justify-between cursor-pointer transition text-left ${
                 formik.touched.selectedSubjects && formik.errors.selectedSubjects
                   ? "border-rose-400 bg-rose-50/20"
                   : "border-[#DCE1E7] hover:border-slate-300"
@@ -472,7 +486,7 @@ export const AcademicDetails = () => {
                 className={
                   formik.values.selectedSubjects?.length === 0
                     ? "text-slate-400"
-                    : "text-[#1F2430] font-medium"
+                    : "text-[#1F2430] font-medium truncate"
                 }
               >
                 {formik.values.selectedSubjects?.length > 0
@@ -481,11 +495,37 @@ export const AcademicDetails = () => {
               </span>
               <FontAwesomeIcon
                 icon={faChevronDown}
-                className={`text-xs text-slate-500 transition-transform ${
+                className={`text-xs text-slate-500 transition-transform shrink-0 ml-2 ${
                   isDropdownOpen ? "rotate-180" : ""
                 }`}
               />
-            </div>
+            </button>
+
+            {/* Selected Subject Chips with Instant Removal */}
+            {formik.values.selectedSubjects?.length > 0 && (
+              <div className="flex flex-wrap gap-2 pt-1">
+                {formik.values.selectedSubjects.map((sub) => (
+                  <span
+                    key={sub}
+                    className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-[#F5E6D8] text-[#E8792E] border border-orange-200 shadow-2xs"
+                  >
+                    <span>{sub}</span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                        toggleSubject(sub);
+                      }}
+                      className="hover:text-rose-600 transition cursor-pointer p-0.5 ml-0.5"
+                      title={`Remove ${sub}`}
+                    >
+                      <FontAwesomeIcon icon={faTimes} className="text-[10px]" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
 
             {formik.touched.selectedSubjects && formik.errors.selectedSubjects && (
               <p className="text-[11px] text-rose-500 mt-1 flex items-center gap-1">
@@ -495,16 +535,21 @@ export const AcademicDetails = () => {
             )}
 
             {isDropdownOpen && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-[#DCE1E7] rounded-xl shadow-xl max-h-60 overflow-y-auto p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-1.5 animate-in fade-in duration-150">
+              <div className="absolute z-30 mt-1 w-full bg-white border border-[#DCE1E7] rounded-xl shadow-xl max-h-60 overflow-y-auto p-2.5 grid grid-cols-1 sm:grid-cols-2 gap-1.5 animate-in fade-in duration-150">
                 {ALL_JAMB_SUBJECTS.map((sub) => {
                   const isSelected = formik.values.selectedSubjects?.includes(sub);
                   return (
-                    <div
+                    <button
                       key={sub}
-                      onClick={() => toggleSubject(sub)}
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs sm:text-sm cursor-pointer transition ${
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleSubject(sub);
+                      }}
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs sm:text-sm cursor-pointer transition text-left w-full ${
                         isSelected
-                          ? "bg-[#F5E6D8] text-[#E8792E] font-bold"
+                          ? "bg-[#F5E6D8] text-[#E8792E] font-semibold"
                           : "hover:bg-slate-100 text-slate-700"
                       }`}
                     >
@@ -515,7 +560,7 @@ export const AcademicDetails = () => {
                           className="text-[#E8792E]"
                         />
                       )}
-                    </div>
+                    </button>
                   );
                 })}
               </div>
