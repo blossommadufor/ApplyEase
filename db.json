@@ -1,0 +1,175 @@
+{
+  "applications": [
+    {
+      "id": "123307",
+      "name": "Jamona Damer",
+      "email": "jamona.damer@gmail.com",
+      "program": "B.Sc. Computer Science",
+      "course": "B.Sc. Computer Science",
+      "university": "University of Lagos (UNILAG)",
+      "status": "Pending",
+      "score": "88% Moderate",
+      "jambScore": 285,
+      "submittedAt": "2026-09-20T10:00:00.000Z"
+    },
+    {
+      "id": "123408",
+      "name": "Jasan Dlash",
+      "email": "jasan.dlash@gmail.com",
+      "program": "B.Tech. Cybersecurity",
+      "course": "B.Tech. Cybersecurity",
+      "university": "Federal University of Technology, Akure (FUTA)",
+      "status": "Approved",
+      "score": "92% High",
+      "jambScore": 292,
+      "submittedAt": "2026-09-18T14:30:00.000Z"
+    },
+    {
+      "id": "123509",
+      "name": "Sarah Cole",
+      "email": "sarah.cole@gmail.com",
+      "program": "Medicine and Surgery (MBBS)",
+      "course": "Medicine and Surgery (MBBS)",
+      "university": "University of Ibadan (UI)",
+      "status": "Rejected",
+      "score": "45% Low",
+      "jambScore": 210,
+      "submittedAt": "2026-09-15T09:15:00.000Z"
+    },
+    {
+      "id": "Bbv4x1VMNxI",
+      "status": "Under Review",
+      "score": "85% High",
+      "submittedAt": "2026-09-23T14:48:07.209Z",
+      "name": "Somtochi Madufor",
+      "email": "blossommadufor@gmail.com",
+      "program": "B.Sc. Computer Science",
+      "course": "B.Sc. Computer Science",
+      "university": "University of Lagos (UNILAG)",
+      "jambScore": 321,
+      "secondarySchool": "ola",
+      "graduationYear": "2024",
+      "selectedSubjects": [
+        "Accounting",
+        "Arabic",
+        "Art",
+        "Agricultural Science"
+      ],
+      "guardianName": "Blossom Madufor",
+      "guardianPhone": "+2348106571613",
+      "contactEmail": "blossommadufor@gmail.com",
+      "phoneNumber": "+2348106571613"
+    },
+    {
+      "id": "WkU5tcTrHis",
+      "status": "Approved",
+      "score": "85% High",
+      "submittedAt": "2026-09-23T17:29:34.821Z",
+      "userId": "bm3xrKhx3HI",
+      "name": "Angel Madufor",
+      "email": "somtochimadufor@gmail.com",
+      "contactEmail": "somtochimadufor@gmail.com",
+      "phone": "07012345678",
+      "phoneNumber": "07012345678",
+      "program": "B.Sc. Architecture",
+      "course": "B.Sc. Architecture",
+      "university": "Ahmadu Bello University (ABU, Zaria)",
+      "jambScore": 209,
+      "jambRegNumber": "000000000000",
+      "secondarySchool": "Pyakasa colleage",
+      "graduationYear": "2022",
+      "selectedSubjects": [
+        "Accounting",
+        "Arabic",
+        "Agricultural Science",
+        "Art"
+      ],
+      "guardianName": "my mummy",
+      "guardianPhone": "07012345678",
+      "guardianEmail": "mummy@gmail.com",
+      "guardianAddress": "Kurudu army barracks",
+      "relationship": "Mother",
+      "state": "FCT",
+      "lga": "abuja",
+      "citizenship": "Nigeria",
+      "homeAddress": "Kurudu army barracks",
+      "dob": "2026-09-23",
+      "gender": "Male",
+      "nin": "12345678910",
+      "wasceFileName": "WASCE_Statement_of_Result.pdf",
+      "jambSlipFileName": "JAMB_UTME_Result_Slip.pdf"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr-1",
+      "fullName": "Jamona Damer",
+      "email": "jamona.damer@gmail.com",
+      "password": "Password123!",
+      "role": "applicant",
+      "createdAt": "2026-09-20T10:00:00.000Z"
+    },
+    {
+      "id": "usr-2",
+      "fullName": "Jasan Dlash",
+      "email": "jasan.dlash@gmail.com",
+      "password": "Password123!",
+      "role": "applicant",
+      "createdAt": "2026-09-18T14:30:00.000Z"
+    },
+    {
+      "id": "usr-3",
+      "fullName": "Sarah Cole",
+      "email": "sarah.cole@gmail.com",
+      "password": "Password123!",
+      "role": "applicant",
+      "createdAt": "2026-09-15T09:15:00.000Z"
+    },
+    {
+      "id": "usr-4",
+      "fullName": "Somtochi Madufor",
+      "email": "blossommadufor@gmail.com",
+      "password": "Password123!",
+      "role": "applicant",
+      "createdAt": "2026-09-23T14:48:07.209Z"
+    },
+    {
+      "id": "admin-1",
+      "fullName": "Dr. Samuel Adeyemi",
+      "email": "admin.unilag@applyease.ng",
+      "password": "AdminSecret2026!",
+      "role": "admin",
+      "institution": "University of Lagos (UNILAG)",
+      "createdAt": "2026-09-15T08:00:00.000Z"
+    },
+    {
+      "id": "admin-2",
+      "fullName": "Prof. Babatunde Fashola",
+      "email": "admin.futa@applyease.ng",
+      "password": "AdminSecret2026!",
+      "role": "admin",
+      "institution": "Federal University of Technology, Akure (FUTA)",
+      "createdAt": "2026-09-15T08:00:00.000Z"
+    },
+    {
+      "id": "admin-3",
+      "fullName": "Dr. Amina Bello",
+      "email": "admin.ui@applyease.ng",
+      "password": "AdminSecret2026!",
+      "role": "admin",
+      "institution": "University of Ibadan (UI)",
+      "createdAt": "2026-09-15T08:00:00.000Z"
+    },
+    {
+      "id": "bm3xrKhx3HI",
+      "fullName": "Angel Madufor",
+      "email": "somtochimadufor@gmail.com",
+      "password": "apple pie",
+      "role": "applicant",
+      "institution": "",
+      "createdAt": "2026-09-23T17:25:02.453Z"
+    }
+  ],
+  "drafts": [],
+  "$schema": "./node_modules/json-server/schema.json"
+}

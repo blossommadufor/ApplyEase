@@ -1,15 +1,15 @@
-import React from 'react';
-import { Outlet } from 'react-router-dom';
-import { Navbar } from './Navbar';
-import { Footer } from './Footer';
+import { Outlet } from "react-router-dom";
+import { Navbar } from "./Navbar";
+import { Footer } from "./Footer";
 
-export const Layout = ({ isLoggedIn, setIsLoggedIn }) => {
+export default function Layout({ isLoggedIn, setIsLoggedIn }) {
   return (
-    <div className='bg-bgLight'>
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col">
       <Navbar isLoggedIn={isLoggedIn} setIsLoggedIn={setIsLoggedIn} />
-      <main>
+      <main className="flex-1">
         <Outlet />
       </main>
+      <Footer />
     </div>
   );
-};
+}

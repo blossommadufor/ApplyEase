@@ -1,4 +1,3 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
 import logoDark from "../assets/logo-dark.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

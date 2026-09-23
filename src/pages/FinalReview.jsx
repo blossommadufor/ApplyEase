@@ -1,21 +1,122 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoDark from "../assets/logo-dark.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCheckCircle, faFileAlt, faPenNib } from "@fortawesome/free-solid-svg-icons";
 import { OnboardingSteps } from "../components/OnboardingSteps";
-import { useOnboarding } from "../context/OnboardingContext"; // Import the context
+import { useOnboarding } from "../context/OnboardingContext";
+import { useApplications } from "../context/ApplicationsContext";
 
 export const FinalReview = () => {
   const navigate = useNavigate();
-  const { formData } = useOnboarding(); // Access global state
+  const { formData, clearFormData } = useOnboarding();
+  const { addApplication } = useApplications();
 
-  const [signature, setSignature] = useState(formData.fullName || "Annoon Smith");
-  const [currentDate] = useState("09/14/2026");
+  // Clean dynamic field resolution with context priority
+  const applicantName =
+    formData.fullName ||
+    (formData.firstName ? `${formData.firstName} ${formData.lastName || ""}`.trim() : "") ||
+    formData.name ||
+    "Applicant Name";
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Navigate to the confirmation success page
+  const selectedUniversity =
+    formData.university ||
+    formData.selectedUniversity ||
+    "Selected Institution";
+
+  const selectedProgram =
+    formData.program ||
+    formData.course ||
+    formData.selectedCourse ||
+    formData.courseOfStudy ||
+    "Unspecified Program";
+
+  const contactEmail = formData.contactEmail || formData.email || "N/A";
+  const contactPhone = formData.phoneNumber || formData.phone || "N/A";
+  const schoolName = formData.secondarySchool || formData.schoolName || "N/A";
+  const gradYear = formData.graduationYear || formData.yearOfGraduation || "N/A";
+
+  const [signature, setSignature] = useState(applicantName !== "Applicant Name" ? applicantName : "");
+  const [currentDate] = useState("09/21/2026");
+
+  const handleSubmit = async (e) => {
+    if (e) e.preventDefault();
+
+    const userFirstName =
+      formData.firstName ||
+      (applicantName !== "Applicant Name" ? applicantName.split(" ")[0] : "User");
+
+    const activeStoredUser = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("currentUser") || "{}");
+      } catch {
+        return {};
+      }
+    })();
+
+    const resolvedEmail =
+      contactEmail !== "N/A"
+        ? contactEmail
+        : formData.contactEmail || formData.email || activeStoredUser.email || "";
+
+    const resolvedName =
+      applicantName !== "Applicant Name"
+        ? applicantName
+        : activeStoredUser.fullName || activeStoredUser.name || "Applicant Name";
+
+    const newApplication = {
+      id: String(Math.floor(100000 + Math.random() * 900000)),
+      userId: activeStoredUser.id || "",
+      name: resolvedName,
+      email: resolvedEmail,
+      contactEmail: resolvedEmail,
+      phone: contactPhone !== "N/A" ? contactPhone : (formData.phoneNumber || formData.phone || ""),
+      phoneNumber: contactPhone !== "N/A" ? contactPhone : (formData.phoneNumber || formData.phone || ""),
+      program: selectedProgram,
+      course: selectedProgram,
+      university: selectedUniversity,
+      score: "85% High",
+      status: "Pending",
+      submittedAt: new Date().toISOString(),
+      jambScore: formData.jambScore || 270,
+      jambRegNumber: formData.jambRegNumber || "",
+      secondarySchool: schoolName,
+      graduationYear: gradYear,
+      selectedSubjects: formData.selectedSubjects || [],
+      guardianName: formData.guardianName || "",
+      guardianPhone: formData.guardianPhone || formData.phoneNumber || "",
+      guardianEmail: formData.guardianEmail || "",
+      guardianAddress: formData.guardianAddress || "",
+      relationship: formData.relationship || "",
+      state: formData.state || "",
+      lga: formData.lga || "",
+      citizenship: formData.citizenship || "Nigeria",
+      homeAddress: formData.homeAddress || "",
+      dob: formData.dob || "",
+      gender: formData.gender || "Male",
+      nin: formData.nin || "",
+      wasceFileName: formData.wasceFileName || "WASCE_Statement_of_Result.pdf",
+      jambSlipFileName: formData.jambSlipFileName || "JAMB_UTME_Result_Slip.pdf",
+    };
+
+    // 1. Sync active user details while preserving ID and role
+    const currentUser = {
+      ...activeStoredUser,
+      fullName: resolvedName,
+      name: resolvedName,
+      firstName: userFirstName,
+      email: resolvedEmail,
+      role: activeStoredUser.role || "applicant",
+    };
+    localStorage.setItem("user", JSON.stringify(currentUser));
+    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+
+    // 2. Submit to JSON Server via ApplicationsContext
+    await addApplication(newApplication);
+
+    // 3. Clear active form draft
+    clearFormData();
+
     navigate("/onboarding/success");
   };
 
@@ -63,12 +164,38 @@ export const FinalReview = () => {
                   Personal Information Review
                 </h2>
                 <div className="space-y-3 text-sm">
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Full Name</span><span className="col-span-2 font-semibold text-[#1F2430]">{formData.fullName || "Annoon Smith"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">DOB</span><span className="col-span-2 text-[#1F2430]">{formData.dob || "06-09/1977"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Citizenship</span><span className="col-span-2 text-[#1F2430]">{formData.citizenship || "Nigeria"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Contact Email</span><span className="col-span-2 text-[#1F2430]">{formData.contactEmail || formData.email || "contactcov@gmail.com"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Phone</span><span className="col-span-2 text-[#1F2430]">{formData.phone || "(013) 7367670"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Home Address</span><span className="col-span-2 text-[#1F2430]">{formData.homeAddress || "23 Foam Home Address, Gotium Road, Nanmangham"}</span></div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Full Name</span>
+                    <span className="col-span-2 font-semibold text-[#1F2430]">{applicantName}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Institution</span>
+                    <span className="col-span-2 font-semibold text-[#1F2430]">{selectedUniversity}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Selected Program</span>
+                    <span className="col-span-2 font-semibold text-[#E8792E]">{selectedProgram}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">DOB</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.dob || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Citizenship</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.citizenship || "Nigeria"}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Contact Email</span>
+                    <span className="col-span-2 text-[#1F2430]">{contactEmail}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Phone</span>
+                    <span className="col-span-2 text-[#1F2430]">{contactPhone}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Home Address</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.homeAddress || "N/A"}</span>
+                  </div>
                 </div>
               </div>
 
@@ -78,15 +205,35 @@ export const FinalReview = () => {
                   Academic Details Review
                 </h2>
                 <div className="space-y-3 text-sm mb-4">
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Secondary School</span><span className="col-span-2 font-semibold text-[#1F2430]">{formData.schoolName || "King's College, Lagos"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Graduation Year</span><span className="col-span-2 text-[#1F2430]">{formData.yearOfGraduation || "2024"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">JAMB UTME</span><span className="col-span-2 text-[#1F2430]">Score: {formData.jambScore || "270"} ({formData.jambRegNumber || "202410982731AB"})</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">JAMB Subjects</span><span className="col-span-2 text-[#1F2430]">{formData.selectedSubjects ? formData.selectedSubjects.join(", ") : "Use of English, Mathematics, Physics, Chemistry"}</span></div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Secondary School</span>
+                    <span className="col-span-2 font-semibold text-[#1F2430]">{schoolName}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Graduation Year</span>
+                    <span className="col-span-2 text-[#1F2430]">{gradYear}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">JAMB UTME</span>
+                    <span className="col-span-2 text-[#1F2430]">
+                      Score: {formData.jambScore || "N/A"} ({formData.jambRegNumber || "N/A"})
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">JAMB Subjects</span>
+                    <span className="col-span-2 text-[#1F2430]">
+                      {Array.isArray(formData.selectedSubjects)
+                        ? formData.selectedSubjects.join(", ")
+                        : formData.selectedSubjects || "N/A"}
+                    </span>
+                  </div>
                 </div>
 
                 {/* O'Level Results Table Preview */}
                 <div className="pt-2">
-                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">O'Level results (Extracted from WAEC Slip)</span>
+                  <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider block mb-2">
+                    O'Level results (Extracted from WAEC Slip)
+                  </span>
                   <div className="overflow-x-auto border border-[#DCE1E7] rounded-lg">
                     <table className="w-full text-left text-xs">
                       <thead className="bg-slate-50 text-slate-700 border-b border-[#DCE1E7]">
@@ -122,32 +269,63 @@ export const FinalReview = () => {
             {/* Right Column: Guardian Data, AI Status Predictor & Signature */}
             <div className="space-y-6">
               
-              {/* Guardian & Secondary Data Review Box */}
+              {/* Guardian Data Review Box */}
               <div className="bg-white rounded-2xl p-6 shadow-sm border border-[#DCE1E7]">
                 <h2 className="text-base font-bold text-[#1F2430] uppercase tracking-wide border-b border-slate-100 pb-3 mb-4">
                   Guardian Data Review
                 </h2>
                 <div className="space-y-3 text-sm">
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Guardian Name</span><span className="col-span-2 font-semibold text-[#1F2430]">{formData.fullName || "John Nomith"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Relationship</span><span className="col-span-2 text-[#1F2430]">{formData.relationship || "Father"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Guardian Email</span><span className="col-span-2 text-[#1F2430]">{formData.email || "guardian@email.com"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Guardian Address</span><span className="col-span-2 text-[#1F2430]">{formData.homeAddress || "28 Anmxi Address, Gotium Road"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">State / LGA</span><span className="col-span-2 text-[#1F2430]">{formData.state || "Lagos"} / {formData.lga || "Ikeja"}</span></div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">Employer</span><span className="col-span-2 text-[#1F2430]">{formData.employer || "Tech Corp Ltd"}</span></div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Guardian Name</span>
+                    <span className="col-span-2 font-semibold text-[#1F2430]">{formData.guardianName || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Relationship</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.relationship || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Guardian Email</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.guardianEmail || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Guardian Address</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.guardianAddress || "N/A"}</span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">State / LGA</span>
+                    <span className="col-span-2 text-[#1F2430]">
+                      {formData.state || "N/A"} / {formData.lga || "N/A"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">Employer</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.employer || "N/A"}</span>
+                  </div>
                   <div className="grid grid-cols-3 items-center">
                     <span className="text-slate-500 font-medium">WASCE Slip</span>
                     <span className="col-span-2 text-emerald-600 font-semibold flex items-center gap-1 text-xs">
-                      <FontAwesomeIcon icon={faFileAlt} /> {formData.wasceFileName ? "Uploaded Successfully" : "Uploaded Successfully"}
+                      <FontAwesomeIcon icon={faFileAlt} /> {formData.wasceFileName || "Uploaded Successfully"}
                     </span>
                   </div>
-                  <div className="grid grid-cols-3"><span className="text-slate-500 font-medium">NIN</span><span className="col-span-2 text-[#1F2430]">0073015533750</span></div>
+                  <div className="grid grid-cols-3 items-center">
+                    <span className="text-slate-500 font-medium">JAMB Slip</span>
+                    <span className="col-span-2 text-emerald-600 font-semibold flex items-center gap-1 text-xs">
+                      <FontAwesomeIcon icon={faFileAlt} /> {formData.jambSlipFileName || "Uploaded Successfully"}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3">
+                    <span className="text-slate-500 font-medium">NIN</span>
+                    <span className="col-span-2 text-[#1F2430]">{formData.nin || "N/A"}</span>
+                  </div>
                 </div>
               </div>
 
               {/* AI Status Predictor Result Card */}
               <div className="bg-gradient-to-r from-slate-900 to-[#1E2432] text-white rounded-2xl p-6 shadow-md">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs uppercase tracking-wider text-[#E8792E] font-bold">AI Status Predictor Result</span>
+                  <span className="text-xs uppercase tracking-wider text-[#E8792E] font-bold">
+                    AI Status Predictor Result
+                  </span>
                   <span className="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-xs font-semibold flex items-center gap-1">
                     <FontAwesomeIcon icon={faCheckCircle} /> 82% - High Likelihood
                   </span>
@@ -217,4 +395,4 @@ export const FinalReview = () => {
       </footer>
     </div>
   );
-}; 
+};

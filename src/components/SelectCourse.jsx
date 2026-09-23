@@ -1,16 +1,21 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faGraduationCap, faCheckCircle, faTimes, faArrowLeft } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCheckCircle,
+  faTimes,
+  faArrowLeft,
+  faSearch,
+} from "@fortawesome/free-solid-svg-icons";
 import { NIGERIAN_UNIVERSITIES } from "../universitiesdata";
-import { useApplications } from "../context/ApplicationsContext";
+import { useOnboarding } from "../context/OnboardingContext";
 
 export const SelectCourse = () => {
   const { universityId } = useParams();
   const navigate = useNavigate();
   const [selectedCourse, setSelectedCourse] = useState(null);
-  
-  const { addApplication } = useApplications();
+  const [searchTerm, setSearchTerm] = useState("");
+  const { updateFormData } = useOnboarding();
 
   const university = NIGERIAN_UNIVERSITIES.find((u) => u.id === universityId);
 
@@ -18,10 +23,29 @@ export const SelectCourse = () => {
     return <div className="p-10 text-center">University not found.</div>;
   }
 
+  const filteredCourses = (university.courses || []).filter((course) => {
+    const term = searchTerm.toLowerCase().trim();
+    return (
+      course.name.toLowerCase().includes(term) ||
+      (course.faculty && course.faculty.toLowerCase().includes(term))
+    );
+  });
+
   const handleContinueToApplication = () => {
     if (!selectedCourse) return;
 
-    addApplication(university.name, selectedCourse.name);
+    // 3. Save selection to Onboarding Context
+    updateFormData({
+      university: university.name,
+      selectedUniversity: university.name,
+      program: selectedCourse.name,
+      course: selectedCourse.name,
+      selectedCourse: selectedCourse.name,
+    });
+
+    // 4. Save to localStorage as a safety fallback against refreshes
+    localStorage.setItem("selectedUniversity", university.name);
+    localStorage.setItem("selectedProgram", selectedCourse.name);
 
     navigate("/onboarding/personal-info", {
       state: { universityName: university.name, courseName: selectedCourse.name },
@@ -38,28 +62,80 @@ export const SelectCourse = () => {
           <FontAwesomeIcon icon={faArrowLeft} /> Back to Universities
         </button>
 
-        <div className="bg-[#1E2432] text-white rounded-2xl p-6 mb-8">
+        <div className="bg-[#1E2432] text-white rounded-2xl p-6 mb-8 shadow-sm">
           <span className="text-xs uppercase font-bold text-[#E8792E]">Selected Institution</span>
-          <h1 className="text-2xl font-extrabold">{university.name}</h1>
+          <h1 className="text-2xl font-extrabold mt-1">{university.name}</h1>
+          <p className="text-xs text-slate-300 mt-1">
+            {university.state} State • {university.type} University
+          </p>
         </div>
 
-        <h2 className="text-lg font-bold mb-4">Select Offered Program / Course</h2>
-        <div className="space-y-3">
-          {university.courses.map((course) => (
-            <div
-              key={course.id}
-              onClick={() => setSelectedCourse(course)}
-              className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-[#E8792E] hover:shadow-sm cursor-pointer transition flex items-center justify-between"
+        {/* Heading & Search Bar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
+          <h2 className="text-lg font-bold">Select Offered Program / Course</h2>
+          <span className="text-xs text-slate-500 font-medium">
+            Showing {filteredCourses.length} of {university.courses.length} courses
+          </span>
+        </div>
+
+        {/* Search Input */}
+        <div className="mb-6 relative">
+          <span className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400">
+            <FontAwesomeIcon icon={faSearch} className="text-sm" />
+          </span>
+          <input
+            type="text"
+            placeholder="Search courses or faculties (e.g. Computer Science, Medicine, Law)..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-11 pr-10 py-3.5 bg-white border border-[#DCE1E7] rounded-2xl text-xs sm:text-sm text-[#1F2430] placeholder-slate-400 focus:outline-none focus:border-[#E8792E] shadow-2xs transition"
+          />
+          {searchTerm && (
+            <button
+              onClick={() => setSearchTerm("")}
+              className="absolute inset-y-0 right-0 pr-4 flex items-center text-slate-400 hover:text-slate-600 cursor-pointer"
+              title="Clear search"
             >
-              <div>
-                <h3 className="font-bold text-base text-[#1F2430]">{course.name}</h3>
-                <span className="text-xs text-slate-500 font-medium">{course.faculty}</span>
+              <FontAwesomeIcon icon={faTimes} className="text-xs" />
+            </button>
+          )}
+        </div>
+
+        {/* Course List */}
+        <div className="space-y-3">
+          {filteredCourses.length > 0 ? (
+            filteredCourses.map((course) => (
+              <div
+                key={course.id}
+                onClick={() => setSelectedCourse(course)}
+                className="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs hover:border-[#E8792E] hover:shadow-sm cursor-pointer transition flex items-center justify-between"
+              >
+                <div>
+                  <h3 className="font-bold text-base text-[#1F2430]">{course.name}</h3>
+                  <span className="text-xs text-slate-500 font-medium">{course.faculty}</span>
+                </div>
+                <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-semibold">
+                  JAMB Cut-off: {course.jambCutoff}
+                </span>
               </div>
-              <span className="text-xs bg-slate-100 text-slate-700 px-3 py-1 rounded-full font-semibold">
-                JAMB Cut-off: {course.jambCutoff}
-              </span>
+            ))
+          ) : (
+            <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center py-12">
+              <p className="text-base font-bold text-slate-700">
+                No courses found matching "{searchTerm}"
+              </p>
+              <p className="text-xs text-slate-500 mt-1">
+                Try searching for a different keyword or faculty department
+              </p>
+              <button
+                type="button"
+                onClick={() => setSearchTerm("")}
+                className="mt-4 px-4 py-2 bg-[#F5E6D8] text-[#E8792E] text-xs font-bold rounded-xl transition cursor-pointer hover:bg-[#E8792E] hover:text-white"
+              >
+                Clear Search Filter
+              </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 

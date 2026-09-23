@@ -1,18 +1,36 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faSearch, faBuildingColumns, faMapMarkerAlt, faChevronRight } from "@fortawesome/free-solid-svg-icons";
 import { NIGERIAN_UNIVERSITIES } from "../universitiesdata";
+import { useOnboarding } from "../context/OnboardingContext";
 
 export const SelectUniversity = () => {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
+  const { updateFormData } = useOnboarding();
 
   const filteredUniversities = NIGERIAN_UNIVERSITIES.filter(
     (uni) =>
       uni.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       uni.state.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleSelectUniversity = (uni) => {
+    // 1. Save chosen university into OnboardingContext
+    updateFormData({
+      university: uni.name,
+      selectedUniversity: uni.name,
+      universityId: uni.id,
+    });
+
+    // 2. Persist to localStorage as a backup against page refreshes
+    localStorage.setItem("selectedUniversity", uni.name);
+    localStorage.setItem("selectedUniversityId", uni.id);
+
+    // 3. Navigate to course selection step
+    navigate(`/select-course/${uni.id}`);
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 text-[#1F2430]">
@@ -40,7 +58,7 @@ export const SelectUniversity = () => {
           {filteredUniversities.map((uni) => (
             <div
               key={uni.id}
-              onClick={() => navigate(`/select-course/${uni.id}`)}
+              onClick={() => handleSelectUniversity(uni)}
               className="bg-white rounded-2xl p-6 border border-slate-200 shadow-xs hover:border-[#E8792E] hover:shadow-md transition cursor-pointer flex items-center justify-between group"
             >
               <div className="flex items-center gap-4">

@@ -1,4 +1,3 @@
-import React from 'react'
 import { ApplicationDashboard } from '../components/ApplicationDashboard'
 
 const MainDasboard = () => {

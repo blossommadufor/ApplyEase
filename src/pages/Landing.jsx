@@ -1,18 +1,25 @@
-import React from 'react'
-import LandingHero from '../components/LandingHero'
-import Features from '../components/Features'
-import FAQ from '../components/FAQ'
-import { Footer } from '../components/Footer'
+import LandingHero from "../components/LandingHero";
+import HowItWorks from "../components/HowItWorks";
+import Features from "../components/Features";
+import LiveEvaluation from "../components/LiveEvaluation";
+import TopInstitutions from "../components/TopInstitutions";
+import Testimonials from "../components/Testimonials";
+import CallToAction from "../components/CallToAction";
+import FAQ from "../components/FAQ";
+import { Footer } from "../components/Footer";
 
-const Landing = () => {
+export default function Landing() {
   return (
     <div>
-      <LandingHero/>
-      <Features/>
-      <FAQ/>
-      <Footer/>
+      <LandingHero />
+      <HowItWorks />
+      <Features />
+      <LiveEvaluation />
+      <TopInstitutions />
+      <Testimonials />
+      <CallToAction />
+      <FAQ />
+      <Footer />
     </div>
-  )
+  );
 }
-
-export default Landing

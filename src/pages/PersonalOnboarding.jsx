@@ -1,4 +1,3 @@
-import React from 'react'
 import { PersonalInfo } from '../components/PersonalInfo'
 
 const PersonalOnboarding = () => {
