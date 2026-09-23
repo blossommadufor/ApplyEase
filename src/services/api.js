@@ -1,178 +1,296 @@
 import axios from "axios";
+import { INITIAL_USERS, INITIAL_APPLICATIONS } from "./seedData";
 
-const API_BASE_URL =
-    import.meta.env.VITE_API_URL || "http://localhost:5000";
+// Resolve API base URL. On production deployments (e.g. Vercel HTTPS),
+// avoid calling http://localhost:5000 which would trigger browser mixed-content blocks.
+const isHttps = typeof window !== "undefined" && window.location.protocol === "https:";
+const configuredUrl =
+    import.meta.env.VITE_API_URL;
+const isRemoteConfigured = Boolean(configuredUrl && configuredUrl.trim());
+
+// If on HTTPS and no remote API is explicitly configured, skip localhost calls directly
+const isLocalhostOnly = !isRemoteConfigured && isHttps;
+
+const API_BASE_URL = configuredUrl || "http://localhost:5000";
 
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         "Content-Type": "application/json",
     },
-    timeout: 5000,
+    timeout: isLocalhostOnly ? 800 : 3500,
 });
 
-// Cache for offline/disconnected resilience
-const localCache = {
-    getApplications: () => {
+// Storage keys
+const STORAGE_KEYS = {
+    APPLICATIONS: "app_applications_data",
+    USERS: "app_users_data",
+};
+
+// Local storage persistent fallback engine
+const storage = {
+    getUsers: () => {
         try {
-            const data = localStorage.getItem("app_applications_data");
-            return data ? JSON.parse(data) : [];
+            const data = localStorage.getItem(STORAGE_KEYS.USERS);
+            if (!data) {
+                localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+                return INITIAL_USERS;
+            }
+            const parsed = JSON.parse(data);
+            // Ensure initial demo/admin users are always accessible
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed;
+            }
+            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
+            return INITIAL_USERS;
         } catch {
-            return [];
+            return INITIAL_USERS;
         }
     },
+
+    saveUsers: (users) => {
+        try {
+            localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(users));
+        } catch (e) {
+            console.warn("Could not save users to localStorage:", e);
+        }
+    },
+
+    getApplications: () => {
+        try {
+            const data = localStorage.getItem(STORAGE_KEYS.APPLICATIONS);
+            if (!data) {
+                localStorage.setItem(
+                    STORAGE_KEYS.APPLICATIONS,
+                    JSON.stringify(INITIAL_APPLICATIONS)
+                );
+                return INITIAL_APPLICATIONS;
+            }
+            const parsed = JSON.parse(data);
+            if (Array.isArray(parsed) && parsed.length > 0) {
+                return parsed;
+            }
+            localStorage.setItem(
+                STORAGE_KEYS.APPLICATIONS,
+                JSON.stringify(INITIAL_APPLICATIONS)
+            );
+            return INITIAL_APPLICATIONS;
+        } catch {
+            return INITIAL_APPLICATIONS;
+        }
+    },
+
     saveApplications: (apps) => {
         try {
-            localStorage.setItem("app_applications_data", JSON.stringify(apps));
+            localStorage.setItem(STORAGE_KEYS.APPLICATIONS, JSON.stringify(apps));
         } catch (e) {
-            console.warn("Could not cache to localStorage", e);
+            console.warn("Could not save applications to localStorage:", e);
         }
     },
 };
 
+// Initialize seed data immediately on load if not present
+if (typeof window !== "undefined") {
+    storage.getUsers();
+    storage.getApplications();
+}
+
 export const applicationsAPI = {
     // Fetch all applications
     getAll: async() => {
-        try {
-            const response = await apiClient.get("/applications");
-            localCache.saveApplications(response.data);
-            return response.data;
-        } catch (error) {
-            console.warn(
-                "JSON Server not reachable at " + API_BASE_URL + ". Using cached applications.",
-                error.message
-            );
-            return localCache.getApplications();
+        if (!isLocalhostOnly) {
+            try {
+                const response = await apiClient.get("/applications");
+                if (Array.isArray(response.data) && response.data.length > 0) {
+                    storage.saveApplications(response.data);
+                    return response.data;
+                }
+            } catch (error) {
+                console.warn(
+                    "JSON Server unreachable. Falling back to persistent browser store:",
+                    error.message
+                );
+            }
         }
+        return storage.getApplications();
     },
 
     // Fetch application by ID
     getById: async(id) => {
-        try {
-            const response = await apiClient.get(`/applications/${id}`);
-            return response.data;
-        } catch (error) {
-            console.warn(`Could not fetch application ${id} from server:`, error.message);
-            const cached = localCache.getApplications();
-            return cached.find((app) => String(app.id) === String(id)) || null;
+        if (!isLocalhostOnly) {
+            try {
+                const response = await apiClient.get(`/applications/${id}`);
+                return response.data;
+            } catch {
+                // Fall through to local cache
+            }
         }
+        const apps = storage.getApplications();
+        return apps.find((app) => String(app.id) === String(id)) || null;
     },
 
-    // Create new application (POST)
+    // Create new application
     create: async(newApp) => {
-        try {
-            const response = await apiClient.post("/applications", newApp);
-            const current = localCache.getApplications();
-            localCache.saveApplications([response.data, ...current]);
-            return response.data;
-        } catch (error) {
-            console.warn(
-                "Could not save application to JSON Server. Storing in local cache:",
-                error.message
-            );
-            const current = localCache.getApplications();
-            const updated = [newApp, ...current];
-            localCache.saveApplications(updated);
-            return newApp;
+        const apps = storage.getApplications();
+        const appWithId = {
+            id: newApp.id || `app-${Date.now()}`,
+            submittedAt: new Date().toISOString(),
+            ...newApp,
+        };
+
+        // Save locally first to guarantee zero data loss
+        const updated = [appWithId, ...apps.filter((a) => String(a.id) !== String(appWithId.id))];
+        storage.saveApplications(updated);
+
+        // Sync to JSON Server if available
+        if (!isLocalhostOnly) {
+            try {
+                const response = await apiClient.post("/applications", appWithId);
+                return response.data;
+            } catch (error) {
+                console.warn("JSON Server sync skipped. Stored in browser database:", error.message);
+            }
         }
+
+        return appWithId;
     },
 
     // Update application status and notes (PATCH)
     updateStatus: async(id, newStatus, internalNotes = "") => {
-        try {
-            const patchData = { status: newStatus };
-            if (internalNotes) {
-                patchData.internalNotes = internalNotes;
+        const apps = storage.getApplications();
+        const updated = apps.map((app) => {
+            if (String(app.id) === String(id)) {
+                return {
+                    ...app,
+                    status: newStatus,
+                    internalNotes: internalNotes !== undefined ? internalNotes : app.internalNotes,
+                };
             }
-            const response = await apiClient.patch(`/applications/${id}`, patchData);
-            const current = localCache.getApplications();
-            const updated = current.map((app) =>
-                String(app.id) === String(id) ? {...app, ...response.data } : app
-            );
-            localCache.saveApplications(updated);
-            return response.data;
-        } catch (error) {
-            console.warn(
-                `Could not patch status for ${id} on JSON Server. Updating local cache:`,
-                error.message
-            );
-            const current = localCache.getApplications();
-            const updated = current.map((app) =>
-                String(app.id) === String(id) ? {...app, status: newStatus, internalNotes } : app
-            );
-            localCache.saveApplications(updated);
-            return { id, status: newStatus, internalNotes };
+            return app;
+        });
+        storage.saveApplications(updated);
+
+        // Sync to JSON Server if available
+        if (!isLocalhostOnly) {
+            try {
+                const patchData = { status: newStatus };
+                if (internalNotes) patchData.internalNotes = internalNotes;
+                const response = await apiClient.patch(`/applications/${id}`, patchData);
+                return response.data;
+            } catch {
+                // Local update already succeeded
+            }
         }
+
+        const modified = updated.find((a) => String(a.id) === String(id));
+        return modified || { id, status: newStatus, internalNotes };
     },
 
     // Delete application
     delete: async(id) => {
-        try {
-            await apiClient.delete(`/applications/${id}`);
-            const current = localCache.getApplications();
-            const updated = current.filter((app) => String(app.id) !== String(id));
-            localCache.saveApplications(updated);
-            return true;
-        } catch (error) {
-            console.warn(`Could not delete application ${id} on server:`, error.message);
-            return false;
+        const apps = storage.getApplications();
+        const updated = apps.filter((app) => String(app.id) !== String(id));
+        storage.saveApplications(updated);
+
+        if (!isLocalhostOnly) {
+            try {
+                await apiClient.delete(`/applications/${id}`);
+            } catch {
+                // Local removal succeeded
+            }
         }
+        return true;
     },
 };
 
 export const usersAPI = {
     getAll: async() => {
-        try {
-            const response = await apiClient.get("/users");
-            return response.data;
-        } catch (error) {
-            console.warn("Could not fetch users from JSON Server:", error.message);
-            return [];
+        if (!isLocalhostOnly) {
+            try {
+                const response = await apiClient.get("/users");
+                if (Array.isArray(response.data) && response.data.length > 0) {
+                    storage.saveUsers(response.data);
+                    return response.data;
+                }
+            } catch {
+                // Fall through
+            }
         }
+        return storage.getUsers();
     },
 
     getByEmail: async(email) => {
         if (!email) return null;
         const cleanEmail = email.toLowerCase().trim();
-        try {
-            const response = await apiClient.get(`/users?email=${encodeURIComponent(cleanEmail)}`);
-            if (Array.isArray(response.data) && response.data.length > 0) {
-                return response.data[0];
+
+        // Try server first if appropriate
+        if (!isLocalhostOnly) {
+            try {
+                const response = await apiClient.get(`/users?email=${encodeURIComponent(cleanEmail)}`);
+                if (Array.isArray(response.data) && response.data.length > 0) {
+                    return response.data[0];
+                }
+            } catch {
+                // Fall through to local store
             }
-            // Case-insensitive fallback
-            const allResponse = await apiClient.get("/users");
-            if (Array.isArray(allResponse.data)) {
-                return allResponse.data.find(
-                    (u) => (u.email || "").toLowerCase().trim() === cleanEmail
-                ) || null;
-            }
-            return null;
-        } catch (error) {
-            console.warn("Could not query user by email from JSON Server:", error.message);
-            return null;
         }
+
+        // Reliable fallback against local user store
+        const users = storage.getUsers();
+        return (
+            users.find((u) => (u.email || "").toLowerCase().trim() === cleanEmail) ||
+            null
+        );
     },
 
     create: async(userData) => {
-        try {
-            const cleanEmail = userData.email.toLowerCase().trim();
-            const newUser = {
-                id: userData.id || `usr-${Date.now()}`,
-                ...userData,
-                email: cleanEmail,
-                createdAt: new Date().toISOString(),
-            };
-            const response = await apiClient.post("/users", newUser);
-            return response.data;
-        } catch (error) {
-            console.warn("Could not create user on JSON Server:", error.message);
-            throw error;
+        const cleanEmail = userData.email.toLowerCase().trim();
+        const users = storage.getUsers();
+
+        // Check if user already exists
+        const existing = users.find(
+            (u) => (u.email || "").toLowerCase().trim() === cleanEmail
+        );
+        if (existing) {
+            throw new Error("An account with this email address already exists. Please sign in.");
         }
+
+        const newUser = {
+            id: userData.id || `usr-${Date.now()}`,
+            ...userData,
+            email: cleanEmail,
+            createdAt: new Date().toISOString(),
+        };
+
+        // Save to local store immediately
+        const updatedUsers = [...users, newUser];
+        storage.saveUsers(updatedUsers);
+
+        // Sync to JSON Server in background if available
+        if (!isLocalhostOnly) {
+            try {
+                const response = await apiClient.post("/users", newUser);
+                return response.data;
+            } catch (error) {
+                console.warn(
+                    "JSON Server unreachable. Account saved in local browser storage:",
+                    error.message
+                );
+            }
+        }
+
+        return newUser;
     },
 
-    // Verify credentials against real user records in JSON Server
-    login: async(email, password, expectedRole = "applicant", expectedInstitution = "") => {
+    // Verify credentials against real user records
+    login: async(
+        email,
+        password,
+        expectedRole = "applicant",
+        expectedInstitution = ""
+    ) => {
         const user = await usersAPI.getByEmail(email);
+
         if (!user) {
             return {
                 success: false,

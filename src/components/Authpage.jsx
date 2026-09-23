@@ -15,7 +15,6 @@ import {
   faExclamationCircle,
   faChevronDown,
   faSpinner,
-  faKey,
 } from "@fortawesome/free-solid-svg-icons";
 import { NIGERIAN_UNIVERSITIES } from "../universitiesdata";
 import { usersAPI } from "../services/api";
@@ -71,12 +70,11 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
       institution: "",
     },
     validationSchema,
-    enableReinitialize: true,
     onSubmit: async (values, { setSubmitting }) => {
       setAuthError("");
       try {
         if (isSignUp) {
-          // --- REAL SIGN UP LOGIC (JSON Server) ---
+          // --- REAL SIGN UP LOGIC ---
           const existingUser = await usersAPI.getByEmail(values.email);
           if (existingUser) {
             setAuthError(
@@ -110,7 +108,7 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
             navigate("/select-university", { replace: true });
           }
         } else {
-          // --- REAL SIGN IN VERIFICATION (JSON Server) ---
+          // --- REAL SIGN IN VERIFICATION ---
           const result = await usersAPI.login(
             values.email.trim(),
             values.password,
@@ -147,7 +145,8 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
       } catch (err) {
         console.error("Auth error:", err);
         setAuthError(
-          "Network error communicating with authentication service. Please ensure json-server is active."
+          err.message ||
+            "Authentication failed. Please check your credentials and try again."
         );
       } finally {
         setSubmitting(false);
@@ -155,95 +154,100 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
     },
   });
 
-  // Quick fill helper for testing and demonstrations
-  const handleQuickFill = (email, password, testRole, inst = "") => {
-    setAuthError("");
-    setRole(testRole);
-    if (isSignUp) setSearchParams({ mode: "signin" });
-    formik.setValues({
-      email,
-      password,
-      fullName: "",
-      institution: inst,
-    });
-  };
-
   return (
     <div className="min-h-screen bg-[#F5E6D8] flex flex-col justify-center py-12 px-4 md:px-8 lg:px-8 font-sans">
       <div className="w-full max-w-md mx-auto">
         <Link to="/" className="flex justify-center mb-6">
           <img
             src={logoDark}
-            alt="ApplyEase"
-            className="w-36 h-auto object-contain"
+            alt="ApplyEase Logo"
+            className="w-40 sm:w-44 h-auto object-contain"
           />
         </Link>
-        <h2 className="text-center text-3xl font-extrabold text-[#1F2430]">
-          {role === "admin"
-            ? "Institutional Portal Sign In"
-            : isSignUp
-            ? "Create your account"
-            : "Sign in to your account"}
-        </h2>
-        {role === "applicant" && (
-          <p className="mt-2 text-center text-sm text-[#8B93A1]">
-            {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button
-              type="button"
-              onClick={toggleMode}
-              className="font-medium text-[#E8792E] hover:underline focus:outline-none cursor-pointer"
-            >
-              {isSignUp ? "Sign in" : "Get started"}
-            </button>
-          </p>
-        )}
-      </div>
 
-      <div className="mt-8 w-full max-w-md mx-auto">
-        <div className="bg-white py-8 px-6 shadow-sm rounded-3xl border border-[#DCE1E7] md:px-10">
-          {/* Role Toggle Selector */}
-          <div className="flex bg-slate-100 p-1 rounded-2xl mb-6 border border-slate-200">
+        <div className="bg-white rounded-3xl p-6 sm:p-8 shadow-sm border border-[#DCE1E7]">
+          {/* Header Title */}
+          <div className="text-center mb-6">
+            <h2 className="text-xl sm:text-2xl font-bold text-[#1F2430]">
+              {isSignUp ? "Create an Account" : "Sign In to Your Account"}
+            </h2>
+            <p className="text-xs sm:text-sm text-[#8B93A1] mt-1">
+              {role === "admin"
+                ? "Institutional administrative admissions access"
+                : isSignUp
+                ? "Enter your details to begin university applications"
+                : "Welcome back! Access your admissions dashboard"}
+            </p>
+          </div>
+
+          {/* Role Selector Tabs (Applicant vs Admin) */}
+          <div className="flex bg-slate-100 p-1 rounded-2xl mb-6">
             <button
               type="button"
               onClick={() => handleRoleChange("applicant")}
-              className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer ${
                 role === "applicant"
-                  ? "bg-white text-[#1F2430] shadow-xs"
-                  : "text-slate-500 hover:text-[#1F2430]"
+                  ? "bg-white text-[#1F2430] shadow-2xs"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
-              <FontAwesomeIcon icon={faGraduationCap} /> Applicant
+              <FontAwesomeIcon icon={faGraduationCap} />
+              <span>Applicant</span>
             </button>
             <button
               type="button"
               onClick={() => handleRoleChange("admin")}
-              className={`flex-1 py-2.5 text-xs font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer ${
+              className={`flex-1 py-2 text-xs sm:text-sm font-semibold rounded-xl transition flex items-center justify-center gap-2 cursor-pointer ${
                 role === "admin"
-                  ? "bg-[#1E2432] text-white shadow-xs"
-                  : "text-slate-500 hover:text-[#1F2430]"
+                  ? "bg-[#1E2432] text-white shadow-2xs"
+                  : "text-slate-500 hover:text-slate-900"
               }`}
             >
-              <FontAwesomeIcon icon={faUserShield} /> Admin Portal
+              <FontAwesomeIcon icon={faUserShield} />
+              <span>Admin / Partner</span>
             </button>
           </div>
 
-          {/* Authentication Error Feedback Banner */}
-          {authError && (
-            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-2xl text-xs font-semibold flex items-start gap-2.5 animate-in fade-in duration-200">
-              <FontAwesomeIcon
-                icon={faExclamationCircle}
-                className="text-rose-600 text-sm shrink-0 mt-0.5"
-              />
-              <span className="leading-snug">{authError}</span>
+          {/* Toggle Sign In / Sign Up Mode (Only for Applicants) */}
+          {role === "applicant" && (
+            <div className="flex items-center justify-center gap-2 text-xs sm:text-sm mb-6 pb-4 border-b border-slate-100">
+              <span className="text-[#8B93A1]">
+                {isSignUp
+                  ? "Already registered an account?"
+                  : "New to ApplyEase?"}
+              </span>
+              <button
+                type="button"
+                onClick={toggleMode}
+                className="text-[#E8792E] font-bold hover:underline cursor-pointer"
+              >
+                {isSignUp ? "Sign In instead" : "Create Account"}
+              </button>
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={formik.handleSubmit}>
-            {/* Full Name field - shown during Applicant Signup OR Admin Login */}
+          {/* Live Auth Error Banner */}
+          {authError && (
+            <div className="mb-5 p-3.5 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-xs sm:text-sm flex items-start gap-2.5 animate-in fade-in duration-200">
+              <FontAwesomeIcon
+                icon={faExclamationCircle}
+                className="text-rose-500 mt-0.5 shrink-0"
+              />
+              <div className="leading-snug">
+                <strong className="block font-semibold">Authentication Error</strong>
+                <span>{authError}</span>
+              </div>
+            </div>
+          )}
+
+          {/* Formik Auth Form */}
+          <form onSubmit={formik.handleSubmit} className="space-y-4">
+            {/* Full Name Field (Sign Up or Admin) */}
             {(isSignUp || role === "admin") && (
               <div className="space-y-1">
                 <label className="block text-xs sm:text-sm font-semibold text-[#1F2430]">
-                  Full Name <span className="text-rose-500">*</span>
+                  {role === "admin" ? "Official Full Name" : "Candidate Full Name"}{" "}
+                  <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -256,7 +260,7 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
                     onChange={formik.handleChange}
                     onBlur={formik.handleBlur}
                     placeholder={
-                      role === "admin" ? "Dr. Samuel Adeyemi" : "Somtochi Madufor"
+                      role === "admin" ? "e.g. Dr. Samuel Adeyemi" : "e.g. Somtochi Madufor"
                     }
                     className={`w-full pl-10 pr-4 py-2.5 bg-slate-50 border rounded-xl text-xs sm:text-sm text-[#1F2430] focus:outline-none transition ${
                       formik.touched.fullName && formik.errors.fullName
@@ -274,11 +278,12 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
               </div>
             )}
 
-            {/* Admin Institution Dropdown */}
+            {/* Institution Dropdown (Only for Admin) */}
             {role === "admin" && (
               <div className="space-y-1">
                 <label className="block text-xs sm:text-sm font-semibold text-[#1F2430]">
-                  Partner University <span className="text-rose-500">*</span>
+                  Accredited University Institution{" "}
+                  <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative">
                   <span className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
@@ -402,49 +407,6 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
             </div>
           </form>
 
-          {/* Demo Accounts Quick-Fill Helper for Testing & Evaluation */}
-          <div className="mt-6 pt-5 border-t border-slate-100 space-y-2">
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block text-center flex items-center justify-center gap-1.5">
-              <FontAwesomeIcon icon={faKey} className="text-slate-400 text-[10px]" />
-              Quick Fill Demo Accounts
-            </span>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <button
-                type="button"
-                onClick={() =>
-                  handleQuickFill(
-                    "blossommadufor@gmail.com",
-                    "Password123!",
-                    "applicant"
-                  )
-                }
-                className="p-2 rounded-xl bg-slate-50 hover:bg-[#F5E6D8] border border-slate-200 text-slate-700 text-left transition cursor-pointer"
-              >
-                <strong className="block text-[11px] text-[#E8792E]">Applicant Account</strong>
-                <span className="text-[10px] text-slate-400 block truncate">
-                  blossommadufor@gmail.com
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() =>
-                  handleQuickFill(
-                    "admin.unilag@applyease.ng",
-                    "AdminSecret2026!",
-                    "admin",
-                    "University of Lagos (UNILAG)"
-                  )
-                }
-                className="p-2 rounded-xl bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 text-left transition cursor-pointer"
-              >
-                <strong className="block text-[11px] text-[#1E2432]">UNILAG Admin</strong>
-                <span className="text-[10px] text-slate-400 block truncate">
-                  admin.unilag@applyease.ng
-                </span>
-              </button>
-            </div>
-          </div>
-
           <div className="mt-6 text-center">
             <Link
               to="/"
@@ -458,3 +420,5 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
     </div>
   );
 };
+
+export default AuthPage;
