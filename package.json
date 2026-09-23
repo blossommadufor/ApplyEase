@@ -6,6 +6,7 @@
     "scripts": {
         "dev": "vite",
         "server": "json-server db.json -p 5000",
+        "start": "json-server db.json --host 0.0.0.0",
         "build": "vite build",
         "lint": "eslint .",
         "preview": "vite preview"

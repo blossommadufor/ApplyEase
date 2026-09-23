@@ -18,7 +18,7 @@ const apiClient = axios.create({
     headers: {
         "Content-Type": "application/json",
     },
-    timeout: isLocalhostOnly ? 800 : 3500,
+    timeout: isLocalhostOnly ? 800 : (isRemoteConfigured ? 45000 : 3500),
 });
 
 // Storage keys
@@ -101,7 +101,7 @@ export const applicationsAPI = {
         if (!isLocalhostOnly) {
             try {
                 const response = await apiClient.get("/applications");
-                if (Array.isArray(response.data) && response.data.length > 0) {
+                if (Array.isArray(response.data)) {
                     storage.saveApplications(response.data);
                     return response.data;
                 }
@@ -138,20 +138,22 @@ export const applicationsAPI = {
             ...newApp,
         };
 
-        // Save locally first to guarantee zero data loss
-        const updated = [appWithId, ...apps.filter((a) => String(a.id) !== String(appWithId.id))];
-        storage.saveApplications(updated);
-
         // Sync to JSON Server if available
         if (!isLocalhostOnly) {
             try {
                 const response = await apiClient.post("/applications", appWithId);
-                return response.data;
+                const saved = response.data || appWithId;
+                const updated = [saved, ...apps.filter((a) => String(a.id) !== String(saved.id))];
+                storage.saveApplications(updated);
+                return saved;
             } catch (error) {
                 console.warn("JSON Server sync skipped. Stored in browser database:", error.message);
             }
         }
 
+        // Save locally if offline / local-only
+        const updated = [appWithId, ...apps.filter((a) => String(a.id) !== String(appWithId.id))];
+        storage.saveApplications(updated);
         return appWithId;
     },
 
@@ -228,7 +230,12 @@ export const usersAPI = {
             try {
                 const response = await apiClient.get(`/users?email=${encodeURIComponent(cleanEmail)}`);
                 if (Array.isArray(response.data) && response.data.length > 0) {
-                    return response.data[0];
+                    const serverUser = response.data[0];
+                    const currentLocal = storage.getUsers();
+                    if (!currentLocal.some((u) => (u.email || "").toLowerCase() === cleanEmail)) {
+                        storage.saveUsers([...currentLocal, serverUser]);
+                    }
+                    return serverUser;
                 }
             } catch {
                 // Fall through to local store
@@ -247,12 +254,26 @@ export const usersAPI = {
         const cleanEmail = userData.email.toLowerCase().trim();
         const users = storage.getUsers();
 
-        // Check if user already exists
-        const existing = users.find(
+        // Check if user already exists in local store
+        const existingLocal = users.find(
             (u) => (u.email || "").toLowerCase().trim() === cleanEmail
         );
-        if (existing) {
+        if (existingLocal) {
             throw new Error("An account with this email address already exists. Please sign in.");
+        }
+
+        // Check if user exists on remote server
+        if (!isLocalhostOnly) {
+            try {
+                const checkRes = await apiClient.get(`/users?email=${encodeURIComponent(cleanEmail)}`);
+                if (Array.isArray(checkRes.data) && checkRes.data.length > 0) {
+                    throw new Error("An account with this email address already exists. Please sign in.");
+                }
+            } catch (err) {
+                if (err.message && err.message.includes("already exists")) {
+                    throw err;
+                }
+            }
         }
 
         const newUser = {
@@ -262,15 +283,14 @@ export const usersAPI = {
             createdAt: new Date().toISOString(),
         };
 
-        // Save to local store immediately
-        const updatedUsers = [...users, newUser];
-        storage.saveUsers(updatedUsers);
-
-        // Sync to JSON Server in background if available
+        // Sync to JSON Server if available
         if (!isLocalhostOnly) {
             try {
                 const response = await apiClient.post("/users", newUser);
-                return response.data;
+                const saved = response.data || newUser;
+                const updatedUsers = [...users, saved];
+                storage.saveUsers(updatedUsers);
+                return saved;
             } catch (error) {
                 console.warn(
                     "JSON Server unreachable. Account saved in local browser storage:",
@@ -279,6 +299,9 @@ export const usersAPI = {
             }
         }
 
+        // Save to local store
+        const updatedUsers = [...users, newUser];
+        storage.saveUsers(updatedUsers);
         return newUser;
     },
 
