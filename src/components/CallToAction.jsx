@@ -23,8 +23,8 @@ export default function CallToAction() {
 
           <div className="flex flex-col sm:flex-row items-center gap-3.5 z-10 w-full sm:w-auto">
             <button
-              onClick={() => navigate("/select-university")}
-              className="w-full sm:w-auto px-6 py-3.5 bg-[#E8792E] hover:bg-[#C96A28] text-white font-semibold text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer group"
+              onClick={() => navigate("/auth?mode=signin")}
+              className="w-full sm:w-auto px-6 py-3.5 bg-[#E8792E] hover:bg-[#C96A28] text-white font-medium text-xs sm:text-sm rounded-xl shadow-lg transition flex items-center justify-center gap-2 cursor-pointer group"
             >
               <FontAwesomeIcon icon={faBolt} className="group-hover:rotate-12 transition-transform" />
               <span>Start Quick Application</span>

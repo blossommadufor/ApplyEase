@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -6,6 +7,7 @@ import {
   faArrowRightFromBracket,
   faXmark,
   faBuildingColumns,
+  faShieldHalved,
 } from "@fortawesome/free-solid-svg-icons";
 import logoLight from "../assets/logo-light.png";
 
@@ -16,6 +18,26 @@ export default function AdminSidebar({
 }) {
   const navigate = useNavigate();
   const location = useLocation();
+
+  const currentAdmin = useMemo(() => {
+    try {
+      return JSON.parse(
+        localStorage.getItem("currentUser") ||
+          localStorage.getItem("user") ||
+          "{}"
+      );
+    } catch {
+      return {};
+    }
+  }, []);
+
+  const userRole = localStorage.getItem("userRole") || currentAdmin.role || "admin";
+  const isSuperAdmin = userRole === "superadmin" || currentAdmin.role === "superadmin";
+
+  const institutionName =
+    localStorage.getItem("adminInstitution") ||
+    currentAdmin.institution ||
+    (isSuperAdmin ? "ApplyNow Headquarters (Global)" : "Partner University");
 
   const isActive = (path) => location.pathname === path;
 
@@ -30,6 +52,9 @@ export default function AdminSidebar({
     }
     localStorage.removeItem("isAdminLoggedIn");
     localStorage.removeItem("adminInstitution");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("user");
     setIsOpen(false);
     navigate("/auth", { replace: true });
   };
@@ -48,7 +73,7 @@ export default function AdminSidebar({
           >
             <img
               src={logoLight}
-              alt="ApplyEase"
+              alt="ApplyNow"
               className="w-32 h-auto object-contain"
             />
           </div>
@@ -67,13 +92,13 @@ export default function AdminSidebar({
         {/* Institution Badge */}
         <div className="px-4 py-4 border-b border-slate-800/80 bg-slate-900/40">
           <div className="flex items-center gap-2.5 text-xs text-slate-300">
-            <FontAwesomeIcon icon={faBuildingColumns} className="text-[#E8792E]" />
+            <FontAwesomeIcon icon={isSuperAdmin ? faShieldHalved : faBuildingColumns} className="text-[#E8792E]" />
             <span className="font-semibold uppercase tracking-wider text-[11px] text-slate-200">
-              Institutional Admin
+              {isSuperAdmin ? "Platform Super Admin" : "Institutional Admin"}
             </span>
           </div>
           <p className="text-[11px] text-slate-400 mt-1 truncate">
-            {localStorage.getItem("adminInstitution") || "Partner University"}
+            {institutionName}
           </p>
         </div>
 

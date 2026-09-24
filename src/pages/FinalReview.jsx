@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import logoDark from "../assets/logo-dark.png";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faCheckCircle, faFileAlt, faPenNib } from "@fortawesome/free-solid-svg-icons";
+import { faCheckCircle, faFileAlt, faPenNib, faSpinner, faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 import { OnboardingSteps } from "../components/OnboardingSteps";
 import { useOnboarding } from "../context/OnboardingContext";
 import { useApplications } from "../context/ApplicationsContext";
@@ -11,6 +11,8 @@ export const FinalReview = () => {
   const navigate = useNavigate();
   const { formData, clearFormData } = useOnboarding();
   const { addApplication } = useApplications();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   // Clean dynamic field resolution with context priority
   const applicantName =
@@ -40,102 +42,135 @@ export const FinalReview = () => {
   const [currentDate] = useState("09/21/2026");
 
   const handleSubmit = async (e) => {
-    if (e) e.preventDefault();
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (isSubmitting) return;
 
-    const userFirstName =
-      formData.firstName ||
-      (applicantName !== "Applicant Name" ? applicantName.split(" ")[0] : "User");
+    setIsSubmitting(true);
+    setSubmitError("");
 
-    const activeStoredUser = (() => {
-      try {
-        return JSON.parse(localStorage.getItem("currentUser") || "{}");
-      } catch {
-        return {};
-      }
-    })();
+    try {
+      const userFirstName =
+        formData.firstName ||
+        (applicantName !== "Applicant Name" ? applicantName.split(" ")[0] : "User");
 
-    const resolvedEmail =
-      contactEmail !== "N/A"
-        ? contactEmail
-        : formData.contactEmail || formData.email || activeStoredUser.email || "";
+      const activeStoredUser = (() => {
+        try {
+          return JSON.parse(
+            localStorage.getItem("currentUser") ||
+              localStorage.getItem("user") ||
+              "{}"
+          );
+        } catch {
+          return {};
+        }
+      })();
 
-    const resolvedName =
-      applicantName !== "Applicant Name"
-        ? applicantName
-        : activeStoredUser.fullName || activeStoredUser.name || "Applicant Name";
+      const resolvedEmail =
+        contactEmail !== "N/A"
+          ? contactEmail
+          : formData.contactEmail ||
+            formData.email ||
+            activeStoredUser.email ||
+            "";
 
-    const newApplication = {
-      id: String(Math.floor(100000 + Math.random() * 900000)),
-      userId: activeStoredUser.id || "",
-      name: resolvedName,
-      email: resolvedEmail,
-      contactEmail: resolvedEmail,
-      phone: contactPhone !== "N/A" ? contactPhone : (formData.phoneNumber || formData.phone || ""),
-      phoneNumber: contactPhone !== "N/A" ? contactPhone : (formData.phoneNumber || formData.phone || ""),
-      program: selectedProgram,
-      course: selectedProgram,
-      university: selectedUniversity,
-      score: "85% High",
-      status: "Pending",
-      submittedAt: new Date().toISOString(),
-      jambScore: formData.jambScore || 270,
-      jambRegNumber: formData.jambRegNumber || "",
-      secondarySchool: schoolName,
-      graduationYear: gradYear,
-      selectedSubjects: formData.selectedSubjects || [],
-      guardianName: formData.guardianName || "",
-      guardianPhone: formData.guardianPhone || formData.phoneNumber || "",
-      guardianEmail: formData.guardianEmail || "",
-      guardianAddress: formData.guardianAddress || "",
-      relationship: formData.relationship || "",
-      state: formData.state || "",
-      lga: formData.lga || "",
-      citizenship: formData.citizenship || "Nigeria",
-      homeAddress: formData.homeAddress || "",
-      dob: formData.dob || "",
-      gender: formData.gender || "Male",
-      nin: formData.nin || "",
-      wasceFileName: formData.wasceFileName || "WASCE_Statement_of_Result.pdf",
-      jambSlipFileName: formData.jambSlipFileName || "JAMB_UTME_Result_Slip.pdf",
-    };
+      const resolvedName =
+        applicantName !== "Applicant Name"
+          ? applicantName
+          : activeStoredUser.fullName ||
+            activeStoredUser.name ||
+            "Applicant Name";
 
-    // 1. Sync active user details while preserving ID and role
-    const currentUser = {
-      ...activeStoredUser,
-      fullName: resolvedName,
-      name: resolvedName,
-      firstName: userFirstName,
-      email: resolvedEmail,
-      role: activeStoredUser.role || "applicant",
-    };
-    localStorage.setItem("user", JSON.stringify(currentUser));
-    localStorage.setItem("currentUser", JSON.stringify(currentUser));
+      const newApplication = {
+        id: String(Math.floor(100000 + Math.random() * 900000)),
+        userId: activeStoredUser.id || "",
+        name: resolvedName,
+        email: resolvedEmail,
+        contactEmail: resolvedEmail,
+        phone:
+          contactPhone !== "N/A"
+            ? contactPhone
+            : formData.phoneNumber || formData.phone || "",
+        phoneNumber:
+          contactPhone !== "N/A"
+            ? contactPhone
+            : formData.phoneNumber || formData.phone || "",
+        program: selectedProgram,
+        course: selectedProgram,
+        university: selectedUniversity,
+        score: "85% High",
+        status: "Pending",
+        submittedAt: new Date().toISOString(),
+        jambScore: formData.jambScore || 270,
+        jambRegNumber: formData.jambRegNumber || "",
+        secondarySchool: schoolName,
+        graduationYear: gradYear,
+        selectedSubjects: formData.selectedSubjects || [],
+        guardianName: formData.guardianName || "",
+        guardianPhone: formData.guardianPhone || formData.phoneNumber || "",
+        guardianEmail: formData.guardianEmail || "",
+        guardianAddress: formData.guardianAddress || "",
+        relationship: formData.relationship || "",
+        state: formData.state || "",
+        lga: formData.lga || "",
+        citizenship: formData.citizenship || "Nigeria",
+        homeAddress: formData.homeAddress || "",
+        dob: formData.dob || "",
+        gender: formData.gender || "Male",
+        nin: formData.nin || "",
+        wasceFileName: formData.wasceFileName || "WASCE_Statement_of_Result.pdf",
+        jambSlipFileName: formData.jambSlipFileName || "JAMB_UTME_Result_Slip.pdf",
+      };
 
-    // 2. Submit to JSON Server via ApplicationsContext
-    await addApplication(newApplication);
+      // 1. Sync active user details while preserving ID and role
+      const currentUser = {
+        ...activeStoredUser,
+        fullName: resolvedName,
+        name: resolvedName,
+        firstName: userFirstName,
+        email: resolvedEmail,
+        role: activeStoredUser.role || "applicant",
+      };
+      localStorage.setItem("isLoggedIn", "true");
+      localStorage.setItem("user", JSON.stringify(currentUser));
+      localStorage.setItem("currentUser", JSON.stringify(currentUser));
 
-    // 3. Clear active form draft
-    clearFormData();
+      // 2. Submit to JSON Server & Firestore via ApplicationsContext
+      await addApplication(newApplication);
 
-    navigate("/onboarding/success");
+      // 3. Clear active form draft
+      clearFormData();
+
+      navigate("/onboarding/success");
+    } catch (err) {
+      console.error("Submission failed:", err);
+      setSubmitError(
+        err.message || "Failed to submit application. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen text-[#1F2430] flex flex-col bg-white">
       {/* Top Header Navigation */}
-      <header className="bg-[#1E2432] text-white h-20 px-6 lg:px-16 flex items-center justify-between border-b border-[#DCE1E7]">
-        <div className="flex items-center gap-3">
-          <img src={logoDark} alt="ApplyEase" className="w-32 h-auto object-contain filter brightness-0 invert" />
+      <header className="bg-[#1E2432] text-white h-20 px-6 lg:px-16 flex items-center justify-between border-b border-slate-800">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
+          <img
+            src={logoDark}
+            alt="ApplyNow"
+            className="w-32 h-auto object-contain filter brightness-0 invert"
+          />
         </div>
-        <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-wider text-slate-300">
-          <a href="#features" className="hover:text-white transition">Features</a>
-          <a href="#pricing" className="hover:text-white transition">Pricing</a>
-          <a href="#institutional" className="hover:text-white transition">Institutional</a>
-        </nav>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-slate-300 hidden sm:inline">Sign In</span>
-          <span className="text-sm px-4 py-2 bg-[#E8792E] text-white font-semibold rounded-md shadow-sm">
-            Get Started
+          <span className="text-xs sm:text-sm font-medium text-slate-300">
+            Step 4 of 4: Final Review
           </span>
         </div>
       </header>
@@ -371,6 +406,17 @@ export const FinalReview = () => {
             </div>
           </div>
 
+        {/* Live Submission Error Banner */}
+        {submitError && (
+          <div className="mt-4 p-4 bg-rose-50 border border-rose-200 rounded-xl text-rose-700 text-sm flex items-start gap-2.5">
+            <FontAwesomeIcon icon={faExclamationCircle} className="text-rose-500 mt-0.5 shrink-0" />
+            <div>
+              <strong className="block font-semibold">Submission Error</strong>
+              <span>{submitError}</span>
+            </div>
+          </div>
+        )}
+
         </form>
       </main>
 
@@ -379,17 +425,23 @@ export const FinalReview = () => {
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={() => navigate("/onboarding/guardian-data")}
-            className="px-6 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-800 font-medium text-sm transition cursor-pointer"
+            className="px-6 py-2.5 rounded-lg border border-slate-600 text-slate-300 hover:text-white hover:bg-slate-800 font-medium text-sm transition cursor-pointer disabled:opacity-50"
           >
             Back
           </button>
           <button
             type="button"
+            disabled={isSubmitting}
             onClick={handleSubmit}
-            className="px-8 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-md transition flex items-center gap-2 cursor-pointer"
+            className="px-8 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-sm shadow-md transition flex items-center gap-2 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            <FontAwesomeIcon icon={faCheckCircle} /> Validate and Submit
+            <FontAwesomeIcon
+              icon={isSubmitting ? faSpinner : faCheckCircle}
+              className={isSubmitting ? "animate-spin" : ""}
+            />
+            <span>{isSubmitting ? "Submitting Application..." : "Validate and Submit"}</span>
           </button>
         </div>
       </footer>

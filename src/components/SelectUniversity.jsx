@@ -37,7 +37,7 @@ export const SelectUniversity = () => {
       <div className="bg-[#1E2432] text-white py-12 md:py-20 px-6 text-center">
         <h1 className="text-4xl font-extrabold mb-5 uppercase">Select a Tertiary Institution</h1>
         <p className="text-slate-300 text-sm max-w-lg mx-auto mb-6">
-          Choose from partner Nigerian universities using ApplyEase to process admissions.
+          Choose from partner Nigerian universities using ApplyNow to process admissions.
         </p>
 
         <div className="max-w-xl mx-auto relative flex items-center">

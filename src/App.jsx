@@ -17,14 +17,24 @@ import { ApplicationsProvider } from "./context/ApplicationsContext";
 import { ApplicationDetails } from "./pages/ApplicationDetails";
 import AdminDashboard from "./pages/AdminDashboard";
 import StudentDetail from "./pages/StudentDetail";
+import Contact from "./pages/Contact";
 
 // Protected Route Guard for Admin
 function AdminRoute({ isAdminLoggedIn, setIsAdminLoggedIn }) {
-  return isAdminLoggedIn ? (
+  const hasAdmin =
+    isAdminLoggedIn || localStorage.getItem("isAdminLoggedIn") === "true";
+  return hasAdmin ? (
     <AdminLayout setIsAdminLoggedIn={setIsAdminLoggedIn} />
   ) : (
     <Navigate to="/auth" replace />
   );
+}
+
+// Protected Route Guard for Applicants
+function UserRoute({ isLoggedIn, children }) {
+  const hasAuth =
+    isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
+  return hasAuth ? children : <Navigate to="/auth?mode=signin" replace />;
 }
 
 export default function App() {
@@ -56,10 +66,39 @@ export default function App() {
               }
             >
               <Route path="/" element={<Landing />} />
-              <Route path="/select-university" element={<SelectUniversity />} />
-              <Route path="/select-course/:universityId" element={<SelectCourse />} />
-              <Route path="/dashboard" element={<MainDasboard />} />
-              <Route path="/dashboard/application/:id" element={<ApplicationDetails />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route
+                path="/select-university"
+                element={
+                  <UserRoute isLoggedIn={isLoggedIn}>
+                    <SelectUniversity />
+                  </UserRoute>
+                }
+              />
+              <Route
+                path="/select-course/:universityId"
+                element={
+                  <UserRoute isLoggedIn={isLoggedIn}>
+                    <SelectCourse />
+                  </UserRoute>
+                }
+              />
+              <Route
+                path="/dashboard"
+                element={
+                  <UserRoute isLoggedIn={isLoggedIn}>
+                    <MainDasboard />
+                  </UserRoute>
+                }
+              />
+              <Route
+                path="/dashboard/application/:id"
+                element={
+                  <UserRoute isLoggedIn={isLoggedIn}>
+                    <ApplicationDetails />
+                  </UserRoute>
+                }
+              />
             </Route>
 
             {/* --- ADMIN LAYOUT (AdminSidebar shows here securely) --- */}
@@ -85,11 +124,46 @@ export default function App() {
                 />
               } 
             />
-            <Route path="/onboarding/personal-info" element={<PersonalInfo />} />
-            <Route path="/onboarding/academic-details" element={<AcademicDetails />} />
-            <Route path="/onboarding/guardian-data" element={<GuardianData />} />
-            <Route path="/onboarding/final-review" element={<FinalReview />} />
-            <Route path="/onboarding/success" element={<ConfirmationSuccess />} />
+            <Route
+              path="/onboarding/personal-info"
+              element={
+                <UserRoute isLoggedIn={isLoggedIn}>
+                  <PersonalInfo />
+                </UserRoute>
+              }
+            />
+            <Route
+              path="/onboarding/academic-details"
+              element={
+                <UserRoute isLoggedIn={isLoggedIn}>
+                  <AcademicDetails />
+                </UserRoute>
+              }
+            />
+            <Route
+              path="/onboarding/guardian-data"
+              element={
+                <UserRoute isLoggedIn={isLoggedIn}>
+                  <GuardianData />
+                </UserRoute>
+              }
+            />
+            <Route
+              path="/onboarding/final-review"
+              element={
+                <UserRoute isLoggedIn={isLoggedIn}>
+                  <FinalReview />
+                </UserRoute>
+              }
+            />
+            <Route
+              path="/onboarding/success"
+              element={
+                <UserRoute isLoggedIn={isLoggedIn}>
+                  <ConfirmationSuccess />
+                </UserRoute>
+              }
+            />
           </Routes>
         </BrowserRouter>
       </ApplicationsProvider>

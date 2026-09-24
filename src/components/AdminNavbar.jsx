@@ -26,15 +26,18 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
     }
   }, []);
 
+  const userRole = localStorage.getItem("userRole") || currentAdmin.role || "admin";
+  const isSuperAdmin = userRole === "superadmin" || currentAdmin.role === "superadmin";
+
   const adminName =
     currentAdmin.fullName ||
     currentAdmin.name ||
-    "Dr. Samuel Adeyemi";
+    (isSuperAdmin ? "ApplyNow Platform Admin" : "Dr. Samuel Adeyemi");
 
   const institutionName =
     localStorage.getItem("adminInstitution") ||
     currentAdmin.institution ||
-    "University of Lagos (UNILAG)";
+    (isSuperAdmin ? "ApplyNow Platform Administration" : "University of Lagos (UNILAG)");
 
   const handleSignOut = () => {
     if (typeof setIsAdminLoggedIn === "function") {
@@ -42,6 +45,9 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
     }
     localStorage.removeItem("isAdminLoggedIn");
     localStorage.removeItem("adminInstitution");
+    localStorage.removeItem("userRole");
+    localStorage.removeItem("currentUser");
+    localStorage.removeItem("user");
     navigate("/auth", { replace: true });
   };
 
@@ -60,20 +66,29 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
 
         <div className="flex items-center gap-3 min-w-0">
           <div className="w-10 h-10 rounded-xl bg-[#1E2432] text-white flex items-center justify-center shrink-0 shadow-xs hidden sm:flex">
-            <FontAwesomeIcon icon={faBuilding} className="text-sm text-[#E8792E]" />
+            <FontAwesomeIcon icon={isSuperAdmin ? faShieldHalved : faBuilding} className="text-sm text-[#E8792E]" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <h2 className="text-sm sm:text-base font-bold text-slate-900 truncate">
                 {institutionName}
               </h2>
-              <span className="hidden lg:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
-                <FontAwesomeIcon icon={faCheckCircle} className="text-[9px]" />
-                Accredited Partner
-              </span>
+              {isSuperAdmin ? (
+                <span className="hidden lg:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-200 shrink-0">
+                  <FontAwesomeIcon icon={faShieldHalved} className="text-[9px]" />
+                  Platform Super Admin
+                </span>
+              ) : (
+                <span className="hidden lg:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200 shrink-0">
+                  <FontAwesomeIcon icon={faCheckCircle} className="text-[9px]" />
+                  Accredited Partner
+                </span>
+              )}
             </div>
             <p className="text-[11px] text-slate-500 font-medium hidden sm:block">
-              Institutional Admissions & Enrollment Console
+              {isSuperAdmin
+                ? "National Multi-Tenant Admissions System Console"
+                : "Institutional Admissions & Enrollment Console"}
             </p>
           </div>
         </div>
@@ -95,7 +110,7 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
         {/* Admin Profile Badge */}
         <div className="flex items-center gap-2.5 pl-2 sm:border-l border-slate-200">
           <div className="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 shrink-0">
-            <FontAwesomeIcon icon={faUserTie} className="text-xs" />
+            <FontAwesomeIcon icon={isSuperAdmin ? faShieldHalved : faUserTie} className="text-xs" />
           </div>
           <div className="hidden md:block text-left">
             <span className="text-xs font-bold text-slate-900 block truncate max-w-[130px]">
@@ -103,7 +118,7 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
             </span>
             <span className="text-[10px] text-[#E8792E] font-semibold flex items-center gap-1">
               <FontAwesomeIcon icon={faShieldHalved} className="text-[9px]" />
-              Admissions Officer
+              {isSuperAdmin ? "Super Admin (Audit)" : "Admissions Officer"}
             </span>
           </div>
         </div>

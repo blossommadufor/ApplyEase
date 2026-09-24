@@ -31,6 +31,23 @@ export default function AIDecisionHub({
     applications.find((a) => String(a.id) === String(applicantId)) ||
     {};
 
+  // Check if current user is superadmin (platform admin)
+  const userRole = localStorage.getItem("userRole") || "";
+  const currentAdminRole = (() => {
+    try {
+      const u = JSON.parse(
+        localStorage.getItem("currentUser") ||
+          localStorage.getItem("user") ||
+          "{}"
+      );
+      return u?.role || "";
+    } catch {
+      return "";
+    }
+  })();
+  const isSuperAdmin =
+    userRole === "superadmin" || currentAdminRole === "superadmin";
+
   const [internalNote, setInternalNote] = useState(
     app.internalNotes || initialNote || ""
   );
@@ -68,6 +85,10 @@ export default function AIDecisionHub({
   };
 
   const handleAction = async (statusType) => {
+    if (isSuperAdmin) {
+      alert("Platform Administrator restriction: Only accredited university officers can approve or reject applications.");
+      return;
+    }
     setIsSubmitting(true);
     setActiveDecision(statusType);
 
@@ -254,28 +275,30 @@ export default function AIDecisionHub({
           </p>
         </div>
 
-        {/* Quick-Insert Remark Chips */}
-        <div className="space-y-2">
-          <div className="flex items-center justify-between px-1">
-            <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-              <FontAwesomeIcon icon={faCommentDots} className="text-slate-400" />
-              Quick Insert Remarks
-            </label>
-            <span className="text-[10px] text-slate-400">Click to append</span>
+        {/* Quick-Insert Remark Chips (Only for University Admins) */}
+        {!isSuperAdmin && (
+          <div className="space-y-2">
+            <div className="flex items-center justify-between px-1">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                <FontAwesomeIcon icon={faCommentDots} className="text-slate-400" />
+                Quick Insert Remarks
+              </label>
+              <span className="text-[10px] text-slate-400">Click to append</span>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {quickRemarkTags.map((tag, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => handleAddRemarkTag(tag)}
+                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#F5E6D8] text-slate-600 hover:text-[#E8792E] text-[11px] font-medium transition cursor-pointer border border-slate-200 hover:border-[#E8792E]/40"
+                >
+                  + {tag}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="flex flex-wrap gap-1.5">
-            {quickRemarkTags.map((tag, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => handleAddRemarkTag(tag)}
-                className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-[#F5E6D8] text-slate-600 hover:text-[#E8792E] text-[11px] font-medium transition cursor-pointer border border-slate-200 hover:border-[#E8792E]/40"
-              >
-                + {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+        )}
 
         {/* Internal Remarks Textarea */}
         <div className="space-y-1.5">
@@ -284,68 +307,104 @@ export default function AIDecisionHub({
           </label>
           <textarea
             rows="3"
+            disabled={isSuperAdmin}
             value={internalNote}
             onChange={(e) => setInternalNote(e.target.value)}
-            placeholder="Type confidential admissions board remarks, interview feedback, or conditions..."
-            className="w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:border-[#E8792E] focus:bg-white transition"
+            placeholder={
+              isSuperAdmin
+                ? "Confidential institutional notes entered by accredited university admissions officers (View-only for Platform Admin)."
+                : "Type confidential admissions board remarks, interview feedback, or conditions..."
+            }
+            className={`w-full p-3.5 bg-slate-50 border border-slate-200 rounded-2xl text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none transition ${
+              isSuperAdmin ? "cursor-not-allowed opacity-80" : "focus:border-[#E8792E] focus:bg-white"
+            }`}
           />
           <span className="text-[10px] text-slate-400 block text-right">
-            Signed by Institutional Admissions Officer
+            {isSuperAdmin
+              ? "Platform Admin Audit View • Read Only"
+              : "Signed by Institutional Admissions Officer"}
           </span>
         </div>
 
-        {/* Action Decision Buttons */}
-        <div className="space-y-2.5 pt-2">
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={() => handleAction("Approved")}
-            className={`w-full py-3 px-4 rounded-xl font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border shadow-2xs ${
-              isCurrentAccepted
-                ? "bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-500/20"
-                : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 border-emerald-200 hover:border-emerald-300"
-            } disabled:opacity-50 active:scale-98`}
-          >
-            {isSubmitting ? (
-              <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
-            ) : (
-              <FontAwesomeIcon icon={faCheck} className="text-sm" />
-            )}
-            <span>
-              {isCurrentAccepted
-                ? "Officially Approved (Click to Re-confirm)"
-                : "Approve Admission Offer"}
-            </span>
-          </button>
+        {/* Action Decision Controls: View-Only for Super Admin vs Action Buttons for University Admin */}
+        {isSuperAdmin ? (
+          <div className="space-y-3 pt-2">
+            <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2">
+              <div className="flex items-center gap-2 font-bold text-amber-900">
+                <FontAwesomeIcon icon={faShieldHalved} className="text-amber-700" />
+                <span>Platform Admin View-Only Mode</span>
+              </div>
+              <p className="text-[11px] text-amber-800 leading-relaxed font-normal">
+                Admission offers, conditions, and rejections can only be made by accredited university officers. 
+                As the ApplyNow platform administrator, you have audit viewing access and cannot alter candidate admission outcomes.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={() => handleAction("Under Review")}
-            className={`w-full py-3 px-4 rounded-xl font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border shadow-2xs ${
-              isCurrentUnderReview
-                ? "bg-amber-100 text-amber-900 border-amber-400 ring-2 ring-amber-500/20"
-                : "bg-amber-50 hover:bg-amber-100 text-amber-800 hover:text-amber-900 border-amber-200 hover:border-amber-300"
-            } disabled:opacity-50 active:scale-98`}
-          >
-            <FontAwesomeIcon icon={faClock} className="text-xs" />
-            <span>Mark Under Review / Awaiting Info</span>
-          </button>
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+              <span className="font-medium text-slate-500">Current Status:</span>
+              <span className="font-bold text-slate-900">{activeDecision}</span>
+            </div>
 
-          <button
-            type="button"
-            disabled={isSubmitting}
-            onClick={() => handleAction("Rejected")}
-            className={`w-full py-3 px-4 rounded-xl font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border shadow-2xs ${
-              isCurrentRejected
-                ? "bg-rose-100 text-rose-800 border-rose-400 ring-2 ring-rose-500/20"
-                : "bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border-rose-200 hover:border-rose-300"
-            } disabled:opacity-50 active:scale-98`}
-          >
-            <FontAwesomeIcon icon={faTimes} className="text-xs" />
-            <span>Decline / Reject Application</span>
-          </button>
-        </div>
+            <div className="p-3.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-600 flex items-center justify-between">
+              <span className="font-medium text-slate-500">Decision Authority:</span>
+              <span className="font-semibold text-slate-800 truncate max-w-[200px]" title={app.university}>
+                {app.university || "Partner University"}
+              </span>
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-2.5 pt-2">
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleAction("Approved")}
+              className={`w-full py-3 px-4 rounded-xl font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border shadow-2xs ${
+                isCurrentAccepted
+                  ? "bg-emerald-100 text-emerald-800 border-emerald-400 ring-2 ring-emerald-500/20"
+                  : "bg-emerald-50 hover:bg-emerald-100 text-emerald-700 hover:text-emerald-800 border-emerald-200 hover:border-emerald-300"
+              } disabled:opacity-50 active:scale-98`}
+            >
+              {isSubmitting ? (
+                <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+              ) : (
+                <FontAwesomeIcon icon={faCheck} className="text-sm" />
+              )}
+              <span>
+                {isCurrentAccepted
+                  ? "Officially Approved (Click to Re-confirm)"
+                  : "Approve Admission Offer"}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleAction("Under Review")}
+              className={`w-full py-3 px-4 rounded-xl font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border shadow-2xs ${
+                isCurrentUnderReview
+                  ? "bg-amber-100 text-amber-900 border-amber-400 ring-2 ring-amber-500/20"
+                  : "bg-amber-50 hover:bg-amber-100 text-amber-800 hover:text-amber-900 border-amber-200 hover:border-amber-300"
+              } disabled:opacity-50 active:scale-98`}
+            >
+              <FontAwesomeIcon icon={faClock} className="text-xs" />
+              <span>Mark Under Review / Awaiting Info</span>
+            </button>
+
+            <button
+              type="button"
+              disabled={isSubmitting}
+              onClick={() => handleAction("Rejected")}
+              className={`w-full py-3 px-4 rounded-xl font-medium text-xs sm:text-sm transition-all flex items-center justify-center gap-2 cursor-pointer border shadow-2xs ${
+                isCurrentRejected
+                  ? "bg-rose-100 text-rose-800 border-rose-400 ring-2 ring-rose-500/20"
+                  : "bg-rose-50 hover:bg-rose-100 text-rose-700 hover:text-rose-800 border-rose-200 hover:border-rose-300"
+              } disabled:opacity-50 active:scale-98`}
+            >
+              <FontAwesomeIcon icon={faTimes} className="text-xs" />
+              <span>Decline / Reject Application</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

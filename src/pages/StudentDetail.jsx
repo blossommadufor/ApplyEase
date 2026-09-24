@@ -48,9 +48,7 @@ export default function StudentDetail() {
   const isRejected = applicationStatus === "rejected";
 
   // Control whether the full-screen decision popup is visible
-  const [showDecisionModal, setShowDecisionModal] = useState(
-    isAcceptedOrApproved || isRejected
-  );
+  const [showDecisionModal, setShowDecisionModal] = useState(false);
 
   // Quick feedback state for copying Applicant ID
   const [copied, setCopied] = useState(false);

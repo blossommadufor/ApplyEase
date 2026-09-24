@@ -42,7 +42,7 @@ export default function HowItWorks() {
             <span>Simple 3-Step Process</span>
           </div>
           <h2 className="text-3xl sm:text-4xl font-extrabold text-[#1F2430] tracking-tight">
-            How ApplyEase Works
+            How ApplyNow Works
           </h2>
           <p className="text-sm sm:text-base text-[#8B93A1] leading-relaxed">
             Go from candidate to admitted university student in three straightforward, transparent steps.

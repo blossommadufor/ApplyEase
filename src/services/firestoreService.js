@@ -52,6 +52,31 @@ export const firestoreService = {
         return list;
     },
 
+    getApplicationsByEmail: async(email) => {
+        if (!email) return [];
+        await firestoreService.seedInitialDataIfEmpty();
+        const cleanEmail = email.toLowerCase().trim();
+        const map = new Map();
+
+        try {
+            const q1 = query(collection(db, "applications"), where("email", "==", cleanEmail));
+            const snap1 = await getDocs(q1);
+            snap1.forEach((d) => map.set(d.id, d.data()));
+        } catch (e) {
+            console.warn("Firestore query email notice:", e.message);
+        }
+
+        try {
+            const q2 = query(collection(db, "applications"), where("contactEmail", "==", cleanEmail));
+            const snap2 = await getDocs(q2);
+            snap2.forEach((d) => map.set(d.id, d.data()));
+        } catch (e) {
+            console.warn("Firestore query contactEmail notice:", e.message);
+        }
+
+        return Array.from(map.values());
+    },
+
     getApplicationById: async(id) => {
         const d = await getDoc(doc(db, "applications", String(id)));
         return d.exists() ? d.data() : null;

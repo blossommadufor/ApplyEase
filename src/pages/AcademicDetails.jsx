@@ -166,7 +166,7 @@ export const AcademicDetails = () => {
         <div className="flex items-center gap-3">
           <img
             src={logoDark}
-            alt="ApplyEase"
+            alt="ApplyNow"
             className="w-32 h-auto object-contain filter brightness-0 invert"
           />
         </div>

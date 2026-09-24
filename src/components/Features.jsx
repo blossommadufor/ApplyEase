@@ -23,7 +23,7 @@ export default function Features() {
             <span className="text-[#E8792E]">Made Effortless</span>
           </h2>
           <p className="text-sm sm:text-base text-[#8B93A1] leading-relaxed max-w-2xl mx-auto">
-            ApplyEase replaces outdated paper trails and confusing portals with a unified,
+            ApplyNow replaces outdated paper trails and confusing portals with a unified,
             AI-assisted platform connecting ambitious students with accredited Nigerian universities.
           </p>
         </div>

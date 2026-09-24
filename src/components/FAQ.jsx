@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faChevronDown,
@@ -33,7 +34,7 @@ export default function FAQ() {
       category: "Applications & Tracking",
       question: "Can I apply to multiple universities with a single profile?",
       answer:
-        "Yes! One of the major advantages of ApplyEase is 'One Profile, Multiple Submissions'. Once your personal bio, secondary school transcripts, and guardian information are completed, you can submit verified dossiers to multiple Federal, State, and Private partner institutions without filling out repetitive paperwork.",
+        "Yes! One of the major advantages of ApplyNow is 'One Profile, Multiple Submissions'. Once your personal bio, secondary school transcripts, and guardian information are completed, you can submit verified dossiers to multiple Federal, State, and Private partner institutions without filling out repetitive paperwork.",
     },
     {
       id: 4,
@@ -47,14 +48,14 @@ export default function FAQ() {
       category: "Applications & Tracking",
       question: "How quickly do partner institutions review my application?",
       answer:
-        "Because applicant credentials and prerequisite combinations are pre-validated by ApplyEase, university admissions officers can review complete dossiers much faster than conventional manual queues—typically providing real-time dashboard status updates within 48 to 72 hours.",
+        "Because applicant credentials and prerequisite combinations are pre-validated by ApplyNow, university admissions officers can review complete dossiers much faster than conventional manual queues—typically providing real-time dashboard status updates within 48 to 72 hours.",
     },
     {
       id: 6,
       category: "Security & Support",
       question: "Is my personal data, JAMB score, and payment secure?",
       answer:
-        "Yes. ApplyEase utilizes industry-grade end-to-end encryption protocols to protect your personal identity, academic records, and transaction logs. Your data is strictly transmitted to authorized admissions officers at your chosen universities.",
+        "Yes. ApplyNow utilizes industry-grade end-to-end encryption protocols to protect your personal identity, academic records, and transaction logs. Your data is strictly transmitted to authorized admissions officers at your chosen universities.",
     },
   ];
 
@@ -180,13 +181,13 @@ export default function FAQ() {
             </div>
           </div>
 
-          <a
-            href="mailto:support@applyease.ng"
-            className="px-5 py-2.5 bg-[#1E2432] hover:bg-slate-800 text-white font-semibold text-xs sm:text-sm rounded-xl transition flex items-center gap-2 shrink-0 cursor-pointer shadow-xs"
+          <Link
+            to="/contact"
+            className="px-5 py-2.5 bg-[#1E2432] hover:bg-slate-800 text-white font-medium text-xs sm:text-sm rounded-xl transition flex items-center gap-2 shrink-0 cursor-pointer shadow-xs"
           >
             <span>Contact Support</span>
             <FontAwesomeIcon icon={faArrowRight} className="text-xs text-[#E8792E]" />
-          </a>
+          </Link>
         </div>
       </div>
     </section>

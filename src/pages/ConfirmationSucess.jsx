@@ -16,20 +16,27 @@ export const ConfirmationSuccess = () => {
   return (
     <div className="min-h-screen text-[#1F2430] flex flex-col bg-white">
       {/* Top Header Navigation */}
-      <header className="bg-[#1E2432] text-white h-20 px-6 lg:px-16 flex items-center justify-between border-b border-[#DCE1E7]">
-        <div className="flex items-center gap-3">
-          <img src={logoDark} alt="ApplyEase" className="w-32 h-auto object-contain filter brightness-0 invert" />
+      <header className="bg-[#1E2432] text-white h-20 px-6 lg:px-16 flex items-center justify-between border-b border-slate-800">
+        <div
+          className="flex items-center gap-3 cursor-pointer"
+          onClick={() => navigate("/")}
+        >
+          <img
+            src={logoDark}
+            alt="ApplyNow"
+            className="w-32 h-auto object-contain filter brightness-0 invert"
+          />
         </div>
-        <nav className="hidden md:flex items-center gap-8 text-sm uppercase tracking-wider text-slate-300">
-          <a href="#features" className="hover:text-white transition">Features</a>
-          <a href="#pricing" className="hover:text-white transition">Pricing</a>
-          <a href="#institutional" className="hover:text-white transition">Institutional</a>
-        </nav>
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium text-slate-300 hidden sm:inline">Sign In</span>
-          <span className="text-sm px-4 py-2 bg-[#E8792E] text-white font-semibold rounded-md shadow-sm">
-            Get Started
-          </span>
+          <button
+            onClick={() => {
+              localStorage.setItem("isLoggedIn", "true");
+              navigate("/dashboard");
+            }}
+            className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition cursor-pointer"
+          >
+            Go to Dashboard &rarr;
+          </button>
         </div>
       </header>
 
@@ -78,7 +85,7 @@ export const ConfirmationSuccess = () => {
 
       {/* Simple Footer */}
       <footer className="bg-white border-t border-[#DCE1E7] py-6 text-center text-xs text-slate-400">
-        © {new Date().getFullYear()} ApplyEase. All rights reserved.
+        © {new Date().getFullYear()} ApplyNow. All rights reserved.
       </footer>
     </div>
   );

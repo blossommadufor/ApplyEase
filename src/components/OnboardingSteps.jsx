@@ -51,19 +51,19 @@ export const OnboardingSteps = ({ currentStep = 1 }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl p-5 sm:p-7 shadow-xs border border-[#DCE1E7] mb-8">
+    <div className="bg-white rounded-2xl p-4 sm:p-7 shadow-xs border border-[#DCE1E7] mb-8">
       {/* Top Progress Info Bar */}
-      <div className="flex items-center justify-between mb-6 pb-4 border-b border-slate-100">
+      <div className="flex items-center justify-between mb-5 pb-3 border-b border-slate-100">
         <div>
-          <span className="text-[11px] font-bold uppercase tracking-wider text-[#E8792E] block">
+          <span className="text-[11px] font-medium uppercase tracking-wider text-[#E8792E] block">
             Admissions Dossier
           </span>
-          <h2 className="text-base sm:text-lg font-bold text-[#1F2430]">
+          <h2 className="text-base sm:text-lg font-medium text-[#1F2430]">
             Application Progress
           </h2>
         </div>
         <div className="text-right">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5E6D8] text-[#E8792E] text-xs font-bold font-mono">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F5E6D8] text-[#E8792E] text-xs font-medium font-mono">
             Step {currentStep} of {steps.length} • {progressPercentage}%
           </span>
         </div>
@@ -72,7 +72,7 @@ export const OnboardingSteps = ({ currentStep = 1 }) => {
       {/* Stepper Flow with Connecting Progress Bar */}
       <div className="relative">
         {/* Continuous Background Track */}
-        <div className="absolute top-5 left-6 right-6 h-1 bg-slate-100 -translate-y-1/2 z-0 hidden sm:block">
+        <div className="absolute top-4.5 sm:top-5 left-6 right-6 h-1 bg-slate-100 -translate-y-1/2 z-0">
           <div
             className="h-full bg-gradient-to-r from-[#E8792E] to-[#C96A28] rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progressPercentage}%` }}
@@ -80,7 +80,7 @@ export const OnboardingSteps = ({ currentStep = 1 }) => {
         </div>
 
         {/* Step Circles & Labels */}
-        <div className="grid grid-cols-4 gap-2 sm:gap-4 relative z-10">
+        <div className="grid grid-cols-4 gap-1 sm:gap-4 relative z-10">
           {steps.map((step) => {
             const isCompleted = step.number < currentStep;
             const isCurrent = step.number === currentStep;
@@ -101,11 +101,11 @@ export const OnboardingSteps = ({ currentStep = 1 }) => {
               >
                 {/* Step Circle */}
                 <div
-                  className={`w-10 h-10 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-bold text-xs sm:text-sm transition-all duration-300 shadow-xs mb-2 group-hover:scale-110 ${
+                  className={`w-9 h-9 sm:w-11 sm:h-11 rounded-full flex items-center justify-center font-medium text-xs sm:text-sm transition-all duration-300 shadow-xs mb-1.5 group-hover:scale-105 ${
                     isCompleted
                       ? "bg-[#1E2432] text-white group-hover:bg-[#E8792E]"
                       : isCurrent
-                      ? "bg-[#E8792E] text-white ring-4 ring-[#F5E6D8] scale-105 shadow-md"
+                      ? "bg-[#E8792E] text-white ring-4 ring-[#F5E6D8] scale-105 shadow-sm"
                       : "bg-white border-2 border-slate-200 text-slate-400 group-hover:border-[#E8792E] group-hover:text-[#E8792E]"
                   }`}
                 >
@@ -116,10 +116,10 @@ export const OnboardingSteps = ({ currentStep = 1 }) => {
                   )}
                 </div>
 
-                {/* Step Labels */}
-                <div className="space-y-0.5 max-w-[90px] sm:max-w-none">
+                {/* Step Labels - Desktop / Tablet Only */}
+                <div className="hidden sm:block space-y-0.5 max-w-[120px]">
                   <p
-                    className={`text-xs sm:text-sm font-bold truncate transition-colors ${
+                    className={`text-xs sm:text-sm font-medium transition-colors ${
                       isCurrent
                         ? "text-[#E8792E]"
                         : isCompleted
@@ -129,13 +129,24 @@ export const OnboardingSteps = ({ currentStep = 1 }) => {
                   >
                     {step.label}
                   </p>
-                  <p className="text-[10px] sm:text-xs text-slate-400 hidden sm:block">
+                  <p className="text-[11px] text-slate-400">
                     {step.sublabel}
                   </p>
                 </div>
               </div>
             );
           })}
+        </div>
+
+        {/* Clean Mobile Step Indicator Banner - Zero Text Collision */}
+        <div className="sm:hidden text-center mt-3 pt-2.5 border-t border-slate-100 flex items-center justify-center gap-1.5">
+          <span className="text-xs text-slate-400 font-normal">Active Step:</span>
+          <span className="text-xs font-medium text-[#E8792E]">
+            {steps[currentStep - 1]?.label}
+          </span>
+          <span className="text-[11px] text-slate-400 font-normal">
+            ({steps[currentStep - 1]?.sublabel})
+          </span>
         </div>
       </div>
     </div>

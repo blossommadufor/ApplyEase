@@ -4,9 +4,9 @@ import Features from "../components/Features";
 import LiveEvaluation from "../components/LiveEvaluation";
 import TopInstitutions from "../components/TopInstitutions";
 import Testimonials from "../components/Testimonials";
+import PartnerWithUs from "../components/PartnerWithUs";
 import CallToAction from "../components/CallToAction";
 import FAQ from "../components/FAQ";
-import { Footer } from "../components/Footer";
 
 export default function Landing() {
   return (
@@ -17,9 +17,9 @@ export default function Landing() {
       <LiveEvaluation />
       <TopInstitutions />
       <Testimonials />
+      <PartnerWithUs />
       <CallToAction />
       <FAQ />
-      <Footer />
     </div>
   );
 }

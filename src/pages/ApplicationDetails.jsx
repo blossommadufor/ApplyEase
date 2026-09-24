@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useApplications } from "../context/ApplicationsContext";
+import { applicationsAPI } from "../services/api";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faArrowLeft,
@@ -18,6 +19,7 @@ import {
   faClock,
   faFileAlt,
   faBolt,
+  faSpinner,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const ApplicationDetails = () => {
@@ -25,10 +27,48 @@ export const ApplicationDetails = () => {
   const navigate = useNavigate();
   const { applications } = useApplications();
 
-  const app = applications.find((item) => item.id.toString() === id);
+  const foundApp = applications.find((item) => item.id.toString() === id);
+  const [fetchedApp, setFetchedApp] = useState(null);
+  const [isFetching, setIsFetching] = useState(() => !foundApp);
+
+  useEffect(() => {
+    if (foundApp) return;
+
+    let isMounted = true;
+    applicationsAPI
+      .getById(id)
+      .then((data) => {
+        if (isMounted) {
+          setFetchedApp(data || null);
+          setIsFetching(false);
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          console.error("Error fetching application details:", err);
+          setIsFetching(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [id, foundApp]);
+
+  const app = foundApp || fetchedApp;
+  const isLoading = isFetching && !app;
 
   // Track if user has explicitly dismissed the decision popup
   const [modalDismissed, setModalDismissed] = useState(false);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#F5F9FA] flex flex-col items-center justify-center p-6 text-center">
+        <FontAwesomeIcon icon={faSpinner} className="animate-spin text-3xl text-[#E8792E] mb-3" />
+        <p className="text-xs font-medium text-slate-500">Loading application details...</p>
+      </div>
+    );
+  }
 
   if (!app) {
     return (

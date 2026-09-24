@@ -67,10 +67,10 @@ export default function LiveEvaluation() {
                 Live Example & Evaluation
               </span>
               <h3 className="text-2xl sm:text-3xl font-bold">
-                See How ApplyEase Evaluates Eligibility
+                See How ApplyNow Evaluates Eligibility
               </h3>
               <p className="text-slate-300 text-xs sm:text-sm mt-4 max-w-xl">
-                Select an applicant scenario below to inspect how ApplyEase calculates eligibility, matches departmental criteria, and prepares applications.
+                Select an applicant scenario below to inspect how ApplyNow calculates eligibility, matches departmental criteria, and prepares applications.
               </p>
             </div>
 
@@ -192,8 +192,8 @@ export default function LiveEvaluation() {
               </div>
 
               <button
-                onClick={() => navigate("/select-university")}
-                className="w-full py-3 bg-[#E8792E] hover:bg-[#C96A28] text-white font-semibold rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                onClick={() => navigate("/auth?mode=signin")}
+                className="w-full py-3 bg-[#E8792E] hover:bg-[#C96A28] text-white font-medium rounded-xl text-xs sm:text-sm transition flex items-center justify-center gap-2 cursor-pointer shadow-sm"
               >
                 <span>Calculate My Admission Odds</span>
                 <FontAwesomeIcon icon={faArrowRight} />

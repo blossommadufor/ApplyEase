@@ -7,7 +7,7 @@ import { faChevronDown, faExclamationCircle } from "@fortawesome/free-solid-svg-
 import { OnboardingSteps } from "../components/OnboardingSteps";
 import { useOnboarding } from "../context/OnboardingContext";
 
-// Yup validation schema for Personal Information
+
 const personalInfoSchema = Yup.object().shape({
   firstName: Yup.string()
     .trim()
@@ -96,7 +96,7 @@ export const PersonalInfo = () => {
         <div className="flex items-center gap-3">
           <img
             src={logoDark}
-            alt="ApplyEase"
+            alt="ApplyNow"
             className="w-32 h-auto object-contain filter brightness-0 invert"
           />
         </div>

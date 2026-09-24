@@ -2,13 +2,11 @@ import axios from "axios";
 import { INITIAL_USERS, INITIAL_APPLICATIONS } from "./seedData";
 import { firestoreService } from "./firestoreService";
 
-// Detection: Are we running locally or in cloud production (e.g. Vercel)?
 const isLocalhost =
     typeof window !== "undefined" &&
     (window.location.hostname === "localhost" ||
         window.location.hostname === "127.0.0.1");
 
-// Local JSON Server endpoint for local development
 const API_BASE_URL = "http://localhost:5000";
 
 const apiClient = axios.create({
@@ -19,13 +17,11 @@ const apiClient = axios.create({
     timeout: 2000,
 });
 
-// Storage keys for browser-level backup
 const STORAGE_KEYS = {
     APPLICATIONS: "app_applications_data",
     USERS: "app_users_data",
 };
 
-// Local storage persistent fallback engine
 const storage = {
     getUsers: () => {
         try {
@@ -36,7 +32,21 @@ const storage = {
             }
             const parsed = JSON.parse(data);
             if (Array.isArray(parsed) && parsed.length > 0) {
-                return parsed;
+                let needsUpdate = false;
+                const merged = [...parsed];
+                INITIAL_USERS.forEach((seedUser) => {
+                    const exists = merged.some(
+                        (u) => (u.email || "").toLowerCase() === seedUser.email.toLowerCase()
+                    );
+                    if (!exists) {
+                        merged.push(seedUser);
+                        needsUpdate = true;
+                    }
+                });
+                if (needsUpdate) {
+                    localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(merged));
+                }
+                return merged;
             }
             localStorage.setItem(STORAGE_KEYS.USERS, JSON.stringify(INITIAL_USERS));
             return INITIAL_USERS;
@@ -95,7 +105,6 @@ if (typeof window !== "undefined") {
 export const applicationsAPI = {
     // Fetch all applications
     getAll: async() => {
-        // 1. When on localhost, JSON Server is the primary source
         if (isLocalhost) {
             try {
                 const response = await apiClient.get("/applications");
@@ -108,7 +117,7 @@ export const applicationsAPI = {
             }
         }
 
-        // 2. Cloud / Vercel: Firebase Firestore is the permanent real-time database
+        // Cloud / Vercel: Firebase Firestore is the permanent real-time database
         try {
             const firestoreApps = await firestoreService.getApplications();
             if (Array.isArray(firestoreApps) && firestoreApps.length > 0) {
@@ -119,11 +128,12 @@ export const applicationsAPI = {
             console.warn("Firestore fetch error, falling back to local store:", err.message);
         }
 
-        // 3. Fallback to local storage
+        // Fallback to local storage
         return storage.getApplications();
     },
 
-    // Fetch application by ID
+
+
     getById: async(id) => {
         if (isLocalhost) {
             try {
@@ -145,6 +155,62 @@ export const applicationsAPI = {
         return apps.find((app) => String(app.id) === String(id)) || null;
     },
 
+
+
+    getByEmail: async(email) => {
+        if (!email) return [];
+        const cleanEmail = email.toLowerCase().trim();
+        const originalTrimmed = email.trim();
+        const emailsToQuery = Array.from(new Set([cleanEmail, originalTrimmed]));
+
+        if (isLocalhost) {
+            try {
+                const requests = [];
+                for (const em of emailsToQuery) {
+                    requests.push(apiClient.get(`/applications?email=${encodeURIComponent(em)}`));
+                    requests.push(apiClient.get(`/applications?contactEmail=${encodeURIComponent(em)}`));
+                }
+                const responses = await Promise.all(requests);
+                const map = new Map();
+                for (const res of responses) {
+                    if (Array.isArray(res.data)) {
+                        res.data.forEach((app) => map.set(String(app.id), app));
+                    }
+                }
+                const results = Array.from(map.values());
+                if (results.length > 0) {
+                    return results;
+                }
+            } catch (err) {
+                console.warn("Local JSON server email filter notice:", err.message);
+            }
+        }
+
+
+        const localApps = storage.getApplications();
+        const filteredLocal = localApps.filter((app) => {
+            const appEmail = (app.email || app.contactEmail || "").toLowerCase().trim();
+            return appEmail === cleanEmail;
+        });
+        if (filteredLocal.length > 0) return filteredLocal;
+
+        try {
+            const firestoreApps = await Promise.race([
+                firestoreService.getApplicationsByEmail(cleanEmail),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Firestore timeout")), 1500)
+                ),
+            ]);
+            if (Array.isArray(firestoreApps) && firestoreApps.length > 0) {
+                return firestoreApps;
+            }
+        } catch {
+            // Fall through
+        }
+
+        return filteredLocal;
+    },
+
     // Create new application
     create: async(newApp) => {
         const appWithId = {
@@ -153,7 +219,6 @@ export const applicationsAPI = {
             ...newApp,
         };
 
-        // 1. Sync to local JSON Server if running locally
         if (isLocalhost) {
             try {
                 await apiClient.post("/applications", appWithId);
@@ -162,14 +227,10 @@ export const applicationsAPI = {
             }
         }
 
-        // 2. Save to Firebase Firestore (permanent cloud persistence)
-        try {
-            await firestoreService.saveApplication(appWithId);
-        } catch (e) {
+        firestoreService.saveApplication(appWithId).catch((e) => {
             console.warn("Firestore save notice:", e.message);
-        }
+        });
 
-        // 3. Keep in browser cache
         const apps = storage.getApplications();
         const updated = [appWithId, ...apps.filter((a) => String(a.id) !== String(appWithId.id))];
         storage.saveApplications(updated);
@@ -179,7 +240,6 @@ export const applicationsAPI = {
 
     // Update application status and notes (PATCH)
     updateStatus: async(id, newStatus, internalNotes = "") => {
-        // 1. Sync to JSON Server locally
         if (isLocalhost) {
             try {
                 const patchData = { status: newStatus };
@@ -190,14 +250,12 @@ export const applicationsAPI = {
             }
         }
 
-        // 2. Sync to Firebase Firestore
-        try {
-            await firestoreService.updateApplicationStatus(id, newStatus, internalNotes);
-        } catch (e) {
+        // Fire-and-forget sync to Firebase Firestore
+        firestoreService.updateApplicationStatus(id, newStatus, internalNotes).catch((e) => {
             console.warn("Firestore status update notice:", e.message);
-        }
+        });
 
-        // 3. Update local cache
+        // Update local cache
         const apps = storage.getApplications();
         const updated = apps.map((app) => {
             if (String(app.id) === String(id)) {
@@ -271,21 +329,41 @@ export const usersAPI = {
         if (!email) return null;
         const cleanEmail = email.toLowerCase().trim();
 
-        // 1. If on localhost, check JSON Server first
+        // 1. If on localhost, check JSON Server first (fast local database)
         if (isLocalhost) {
             try {
                 const response = await apiClient.get(`/users?email=${encodeURIComponent(cleanEmail)}`);
-                if (Array.isArray(response.data) && response.data.length > 0) {
-                    return response.data[0];
+                if (Array.isArray(response.data)) {
+                    if (response.data.length > 0) {
+                        return response.data[0];
+                    }
+                    // JSON Server is authoritative locally and confirmed 0 matching users
+                    const localUsers = storage.getUsers();
+                    const localMatch = localUsers.find(
+                        (u) => (u.email || "").toLowerCase().trim() === cleanEmail
+                    );
+                    return localMatch || null;
                 }
             } catch {
-                // Fall through
+                // Fall through if local JSON Server is offline
             }
         }
 
-        // 2. Check Firebase Firestore
+        // 2. Check local storage cache
+        const localUsers = storage.getUsers();
+        const localMatch = localUsers.find(
+            (u) => (u.email || "").toLowerCase().trim() === cleanEmail
+        );
+        if (localMatch) return localMatch;
+
+        // 3. Check Firebase Firestore with 1.5-second timeout (for remote / Vercel cloud)
         try {
-            const firestoreUser = await firestoreService.getUserByEmail(cleanEmail);
+            const firestoreUser = await Promise.race([
+                firestoreService.getUserByEmail(cleanEmail),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Firestore timeout")), 1500)
+                ),
+            ]);
             if (firestoreUser) {
                 return firestoreUser;
             }
@@ -293,12 +371,7 @@ export const usersAPI = {
             // Fall through
         }
 
-        // 3. Fallback to local store
-        const users = storage.getUsers();
-        return (
-            users.find((u) => (u.email || "").toLowerCase().trim() === cleanEmail) ||
-            null
-        );
+        return null;
     },
 
     // Register a new user
@@ -318,7 +391,7 @@ export const usersAPI = {
             createdAt: new Date().toISOString(),
         };
 
-        // 1. Sync to JSON Server if on localhost
+        // Sync to JSON Server if on localhost
         if (isLocalhost) {
             try {
                 await apiClient.post("/users", newUser);
@@ -327,14 +400,12 @@ export const usersAPI = {
             }
         }
 
-        // 2. Save to Firebase Firestore (permanent cloud persistence)
-        try {
-            await firestoreService.createUser(newUser);
-        } catch (error) {
+        // Fire-and-forget sync to Firebase Firestore (non-blocking)
+        firestoreService.createUser(newUser).catch((error) => {
             console.warn("Firestore user sync notice:", error.message);
-        }
+        });
 
-        // 3. Save to local storage
+        // Save to local storage
         const users = storage.getUsers();
         const updatedUsers = [...users, newUser];
         storage.saveUsers(updatedUsers);
@@ -366,20 +437,31 @@ export const usersAPI = {
         }
 
         if (expectedRole && user.role && user.role.toLowerCase() !== expectedRole.toLowerCase()) {
-            return {
-                success: false,
-                error: `Unauthorized access: This account is registered as an ${user.role}. Please switch to the ${user.role} sign in tab.`,
-            };
+            const isSuperAdminOnAdminTab =
+                expectedRole.toLowerCase() === "admin" &&
+                user.role.toLowerCase() === "superadmin";
+
+            if (!isSuperAdminOnAdminTab) {
+                return {
+                    success: false,
+                    error: `Unauthorized access: This account is registered as an ${user.role}. Please switch to the ${user.role} sign in tab.`,
+                };
+            }
         }
 
         if (expectedRole === "admin" && expectedInstitution) {
-            const userInst = (user.institution || "").toLowerCase().trim();
-            const reqInst = expectedInstitution.toLowerCase().trim();
-            if (userInst && !reqInst.includes(userInst) && !userInst.includes(reqInst)) {
-                return {
-                    success: false,
-                    error: `Institutional mismatch: Your credentials belong to ${user.institution}, not ${expectedInstitution}.`,
-                };
+            // Superadmin has global platform audit access and is not restricted to a single university
+            if (user.role && user.role.toLowerCase() === "superadmin") {
+                // Permitted platform-wide access
+            } else {
+                const userInst = (user.institution || "").toLowerCase().trim();
+                const reqInst = expectedInstitution.toLowerCase().trim();
+                if (userInst && !reqInst.includes(userInst) && !userInst.includes(reqInst)) {
+                    return {
+                        success: false,
+                        error: `Institutional mismatch: Your credentials belong to ${user.institution}, not ${expectedInstitution}.`,
+                    };
+                }
             }
         }
 

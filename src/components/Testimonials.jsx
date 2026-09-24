@@ -17,7 +17,7 @@ export default function Testimonials() {
       rating: 5,
       jambScore: "284 JAMB",
       comment:
-        "I was worried my UTME score wouldn't meet the departmental cutoff. ApplyEase's eligibility match engine showed me exactly where I stood and how my O'Level subjects clustered. I tracked my status live and received my admission notification seamlessly!",
+        "I was worried my UTME score wouldn't meet the departmental cutoff. ApplyNow's eligibility match engine showed me exactly where I stood and how my O'Level subjects clustered. I tracked my status live and received my admission notification seamlessly!",
     },
     {
       id: 2,
@@ -28,7 +28,7 @@ export default function Testimonials() {
       rating: 5,
       jambScore: "296 JAMB",
       comment:
-        "Filling redundant application forms repeatedly for each school was frustrating and costly. ApplyEase allowed me to verify my academic credentials once and submit my complete dossier with a single click. The transparency is unmatched.",
+        "Filling redundant application forms repeatedly for each school was frustrating and costly. ApplyNow allowed me to verify my academic credentials once and submit my complete dossier with a single click. The transparency is unmatched.",
     },
     {
       id: 3,
@@ -56,7 +56,7 @@ export default function Testimonials() {
             Trusted by Ambitious Students
           </h2>
           <p className="text-sm sm:text-base text-[#8B93A1] leading-relaxed">
-            Discover how candidates use ApplyEase to benchmark cutoffs, submit verified dossiers, and secure admission into top programs.
+            Discover how candidates use ApplyNow to benchmark cutoffs, submit verified dossiers, and secure admission into top programs.
           </p>
         </div>
 

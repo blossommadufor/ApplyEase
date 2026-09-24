@@ -8,12 +8,30 @@ export const ApplicationsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Load applications from JSON Server asynchronously
+  const resolveActiveUser = () => {
+    try {
+      const stored =
+        localStorage.getItem("currentUser") || localStorage.getItem("user");
+      return stored ? JSON.parse(stored) : {};
+    } catch {
+      return {};
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
+    const user = resolveActiveUser();
+    const role = localStorage.getItem("userRole") || user.role || "applicant";
+    const userEmail = (user.email || user.contactEmail || "").toLowerCase().trim();
 
-    applicationsAPI
-      .getAll()
+    const fetchPromise =
+      role === "admin" || role === "superadmin"
+        ? applicationsAPI.getAll()
+        : userEmail
+        ? applicationsAPI.getByEmail(userEmail)
+        : Promise.resolve([]);
+
+    fetchPromise
       .then((data) => {
         if (isMounted) {
           const list = Array.isArray(data) ? data : [];
@@ -30,7 +48,7 @@ export const ApplicationsProvider = ({ children }) => {
       })
       .catch((err) => {
         if (isMounted) {
-          console.error("Failed to fetch applications from server:", err);
+          console.error("Failed to load applications from server:", err);
           setError(err.message);
           setLoading(false);
         }
@@ -41,9 +59,20 @@ export const ApplicationsProvider = ({ children }) => {
     };
   }, []);
 
-  const refreshApplications = async () => {
+  const refreshApplications = async (explicitEmail) => {
     try {
-      const data = await applicationsAPI.getAll();
+      const user = resolveActiveUser();
+      const role = localStorage.getItem("userRole") || user.role || "applicant";
+      const userEmail =
+        explicitEmail || (user.email || user.contactEmail || "").toLowerCase().trim();
+
+      const data =
+        role === "admin" || role === "superadmin"
+          ? await applicationsAPI.getAll()
+          : userEmail
+          ? await applicationsAPI.getByEmail(userEmail)
+          : [];
+
       const list = Array.isArray(data) ? data : [];
       const sorted = [...list].sort((a, b) => {
         const timeA = a.submittedAt ? new Date(a.submittedAt).getTime() : 0;
@@ -53,9 +82,11 @@ export const ApplicationsProvider = ({ children }) => {
       });
       setApplications(sorted);
       setError(null);
+      return sorted;
     } catch (err) {
       console.error("Failed to refresh applications from server:", err);
       setError(err.message);
+      return [];
     }
   };
 
