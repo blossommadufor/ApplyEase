@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useApplications } from "../context/ApplicationsContext";
 import { NIGERIAN_UNIVERSITIES } from "../universitiesdata";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -17,14 +17,20 @@ import {
 import { isInstitutionMatch } from "../utils/institutionMatcher";
 
 const AdmissionOverview = () => {
-  const { applications = [] } = useApplications();
+  const { applications = [], refreshApplications } = useApplications();
+
+  useEffect(() => {
+    if (typeof refreshApplications === "function") {
+      refreshApplications();
+    }
+  }, [refreshApplications]);
 
   // Resolve current logged in admin details
   const currentAdmin = useMemo(() => {
     try {
       return JSON.parse(
-        localStorage.getItem("currentUser") ||
-          localStorage.getItem("user") ||
+        sessionStorage.getItem("currentUser") ||
+          sessionStorage.getItem("user") ||
           "{}"
       );
     } catch {
@@ -32,11 +38,11 @@ const AdmissionOverview = () => {
     }
   }, []);
 
-  const userRole = localStorage.getItem("userRole") || currentAdmin.role || "admin";
+  const userRole = sessionStorage.getItem("userRole") || currentAdmin.role || "admin";
   const isSuperAdmin = userRole === "superadmin" || currentAdmin.role === "superadmin";
 
   const adminInstitution =
-    localStorage.getItem("adminInstitution") ||
+    sessionStorage.getItem("adminInstitution") ||
     currentAdmin.institution ||
     (isSuperAdmin ? "ApplyNow Headquarters" : "University of Lagos (UNILAG)");
 

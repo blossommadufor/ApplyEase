@@ -20,8 +20,8 @@ const ApplicantList = () => {
   const currentAdmin = useMemo(() => {
     try {
       return JSON.parse(
-        localStorage.getItem('currentUser') ||
-          localStorage.getItem('user') ||
+        sessionStorage.getItem('currentUser') ||
+          sessionStorage.getItem('user') ||
           '{}'
       );
     } catch {
@@ -29,11 +29,11 @@ const ApplicantList = () => {
     }
   }, []);
 
-  const userRole = localStorage.getItem('userRole') || currentAdmin.role || 'admin';
+  const userRole = sessionStorage.getItem('userRole') || currentAdmin.role || 'admin';
   const isSuperAdmin = userRole === 'superadmin' || currentAdmin.role === 'superadmin';
 
   const adminInstitution =
-    localStorage.getItem('adminInstitution') ||
+    sessionStorage.getItem('adminInstitution') ||
     currentAdmin.institution ||
     (isSuperAdmin ? 'ApplyNow Headquarters' : 'University of Lagos (UNILAG)');
 

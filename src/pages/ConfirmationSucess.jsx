@@ -30,7 +30,7 @@ export const ConfirmationSuccess = () => {
         <div className="flex items-center gap-4">
           <button
             onClick={() => {
-              localStorage.setItem("isLoggedIn", "true");
+              sessionStorage.setItem("isLoggedIn", "true");
               navigate("/dashboard");
             }}
             className="text-xs sm:text-sm font-medium text-slate-300 hover:text-white transition cursor-pointer"
@@ -65,7 +65,7 @@ export const ConfirmationSuccess = () => {
           <button
             type="button"
             onClick={() => {
-              localStorage.setItem("isLoggedIn", "true");
+              sessionStorage.setItem("isLoggedIn", "true");
               navigate("/dashboard");
             }}
             className="w-full sm:w-auto px-8 py-3 rounded-xl bg-[#1E2432] hover:bg-slate-800 text-white font-semibold text-sm shadow-md transition cursor-pointer"

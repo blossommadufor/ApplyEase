@@ -3,11 +3,11 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faGauge,
-  faUsers,
   faArrowRightFromBracket,
   faXmark,
   faBuildingColumns,
   faShieldHalved,
+  faGraduationCap,
 } from "@fortawesome/free-solid-svg-icons";
 import logoLight from "../assets/logo-light.png";
 
@@ -22,8 +22,8 @@ export default function AdminSidebar({
   const currentAdmin = useMemo(() => {
     try {
       return JSON.parse(
-        localStorage.getItem("currentUser") ||
-          localStorage.getItem("user") ||
+        sessionStorage.getItem("currentUser") ||
+          sessionStorage.getItem("user") ||
           "{}"
       );
     } catch {
@@ -31,30 +31,30 @@ export default function AdminSidebar({
     }
   }, []);
 
-  const userRole = localStorage.getItem("userRole") || currentAdmin.role || "admin";
+  const userRole = sessionStorage.getItem("userRole") || currentAdmin.role || "admin";
   const isSuperAdmin = userRole === "superadmin" || currentAdmin.role === "superadmin";
 
   const institutionName =
-    localStorage.getItem("adminInstitution") ||
+    sessionStorage.getItem("adminInstitution") ||
     currentAdmin.institution ||
     (isSuperAdmin ? "ApplyNow Headquarters (Global)" : "Partner University");
 
   const isActive = (path) => location.pathname === path;
 
   const navLinks = [
-    { name: "Overview Dashboard", path: "/admin-dashboard", icon: faGauge },
-    { name: "Applicant Dossiers", path: "/admin-dashboard", icon: faUsers },
+    { name: "Overview & Dossiers", path: "/admin-dashboard", icon: faGauge },
+    { name: "Course Management", path: "/admin-dashboard/courses", icon: faGraduationCap },
   ];
 
   const handleExitAdmin = () => {
     if (typeof setIsAdminLoggedIn === "function") {
       setIsAdminLoggedIn(false);
     }
-    localStorage.removeItem("isAdminLoggedIn");
-    localStorage.removeItem("adminInstitution");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("isAdminLoggedIn");
+    sessionStorage.removeItem("adminInstitution");
+    sessionStorage.removeItem("userRole");
+    sessionStorage.removeItem("currentUser");
+    sessionStorage.removeItem("user");
     setIsOpen(false);
     navigate("/auth", { replace: true });
   };

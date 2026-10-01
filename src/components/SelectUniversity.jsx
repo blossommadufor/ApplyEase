@@ -24,9 +24,9 @@ export const SelectUniversity = () => {
       universityId: uni.id,
     });
 
-    // 2. Persist to localStorage as a backup against page refreshes
-    localStorage.setItem("selectedUniversity", uni.name);
-    localStorage.setItem("selectedUniversityId", uni.id);
+    // 2. Persist to sessionStorage as a backup against page refreshes
+    sessionStorage.setItem("selectedUniversity", uni.name);
+    sessionStorage.setItem("selectedUniversityId", uni.id);
 
     // 3. Navigate to course selection step
     navigate(`/select-course/${uni.id}`);

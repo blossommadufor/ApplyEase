@@ -6,6 +6,7 @@ import { faCheckCircle, faFileAlt, faPenNib, faSpinner, faExclamationCircle } fr
 import { OnboardingSteps } from "../components/OnboardingSteps";
 import { useOnboarding } from "../context/OnboardingContext";
 import { useApplications } from "../context/ApplicationsContext";
+import { calculateAdmissionScore } from "../services/aiEvaluationService";
 
 export const FinalReview = () => {
   const navigate = useNavigate();
@@ -59,8 +60,8 @@ export const FinalReview = () => {
       const activeStoredUser = (() => {
         try {
           return JSON.parse(
-            localStorage.getItem("currentUser") ||
-              localStorage.getItem("user") ||
+            sessionStorage.getItem("currentUser") ||
+              sessionStorage.getItem("user") ||
               "{}"
           );
         } catch {
@@ -83,6 +84,13 @@ export const FinalReview = () => {
             activeStoredUser.name ||
             "Applicant Name";
 
+      const admissionEval = calculateAdmissionScore({
+        jambScore: formData.jambScore || 270,
+        waecGrades: formData.selectedSubjects || [],
+        targetCutoff: formData.targetCutoff || 200,
+        sittingType: formData.sitting || "One Sitting",
+      });
+
       const newApplication = {
         id: String(Math.floor(100000 + Math.random() * 900000)),
         userId: activeStoredUser.id || "",
@@ -100,7 +108,7 @@ export const FinalReview = () => {
         program: selectedProgram,
         course: selectedProgram,
         university: selectedUniversity,
-        score: "85% High",
+        score: `${admissionEval.totalScore}% ${admissionEval.fitCategory.split(" ")[0]}`,
         status: "Pending",
         submittedAt: new Date().toISOString(),
         jambScore: formData.jambScore || 270,
@@ -133,9 +141,9 @@ export const FinalReview = () => {
         email: resolvedEmail,
         role: activeStoredUser.role || "applicant",
       };
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("user", JSON.stringify(currentUser));
-      localStorage.setItem("currentUser", JSON.stringify(currentUser));
+      sessionStorage.setItem("isLoggedIn", "true");
+      sessionStorage.setItem("user", JSON.stringify(currentUser));
+      sessionStorage.setItem("currentUser", JSON.stringify(currentUser));
 
       // 2. Submit to JSON Server & Firestore via ApplicationsContext
       await addApplication(newApplication);

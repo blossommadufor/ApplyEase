@@ -54,11 +54,11 @@ export const Navbar = ({ isLoggedIn, setIsLoggedIn }) => {
     if (typeof setIsLoggedIn === "function") {
       setIsLoggedIn(false);
     }
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("user");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("adminInstitution");
+    sessionStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("currentUser");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("userRole");
+    sessionStorage.removeItem("adminInstitution");
     closeMenu();
     navigate("/", { replace: true });
   };

@@ -1,6 +1,10 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApplications } from "../context/ApplicationsContext";
+import {
+  calculateAdmissionScore,
+  evaluateAdmissionCandidate,
+} from "../services/aiEvaluationService";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faBrain,
@@ -26,18 +30,21 @@ export default function AIDecisionHub({
   const { applications, updateStatus } = useApplications();
 
   // Find latest application record if not directly passed
-  const app =
-    application ||
-    applications.find((a) => String(a.id) === String(applicantId)) ||
-    {};
+  const app = useMemo(() => {
+    return (
+      application ||
+      applications.find((a) => String(a.id) === String(applicantId)) ||
+      {}
+    );
+  }, [application, applications, applicantId]);
 
   // Check if current user is superadmin (platform admin)
-  const userRole = localStorage.getItem("userRole") || "";
+  const userRole = sessionStorage.getItem("userRole") || "";
   const currentAdminRole = (() => {
     try {
       const u = JSON.parse(
-        localStorage.getItem("currentUser") ||
-          localStorage.getItem("user") ||
+        sessionStorage.getItem("currentUser") ||
+          sessionStorage.getItem("user") ||
           "{}"
       );
       return u?.role || "";
@@ -57,16 +64,49 @@ export default function AIDecisionHub({
     app.status || currentStatus || "Pending"
   );
 
-  // Compute realistic dynamic match score based on candidate data
-  const jambScore = parseInt(app.jambScore) || 270;
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+
+  // Deterministic formula evaluation (60% JAMB + 30% WAEC + 10% Merits)
+  const admissionEval = useMemo(() => {
+    return calculateAdmissionScore({
+      jambScore: app.jambScore || 250,
+      waecGrades: app.waecGrades || app.selectedSubjects || [],
+      targetCutoff: app.targetCutoff || 200,
+      sittingType: app.sitting || "One Sitting",
+      coreSubjectsMatched: 5,
+    });
+  }, [app]);
+
   const rawScore = app.score ? parseInt(app.score) : null;
   const matchPercentage =
     rawScore && !isNaN(rawScore)
       ? rawScore
-      : Math.min(Math.round((jambScore / 400) * 85) + 15, 96);
+      : admissionEval.totalScore;
 
   const isHighMatch = matchPercentage >= 80;
-  const isModerateMatch = matchPercentage >= 65 && matchPercentage < 80;
+  const isModerateMatch = matchPercentage >= 60 && matchPercentage < 80;
+
+  const handleGenerateAiRemark = async () => {
+    setIsGeneratingAi(true);
+    try {
+      const evaluation = await evaluateAdmissionCandidate({
+        candidateName: app.name || "Candidate",
+        jambScore: app.jambScore || 250,
+        targetUni: app.university || "Accredited University",
+        targetCourse: app.course || app.program || "Academic Program",
+        cutoff: app.targetCutoff || 200,
+        waecGrades: app.waecGrades || app.selectedSubjects || [],
+        sittingType: app.sitting || "One Sitting",
+      });
+      if (evaluation?.institutionalRemarks) {
+        setInternalNote(evaluation.institutionalRemarks);
+      }
+    } catch (err) {
+      console.warn("AI Remark generation error:", err);
+    } finally {
+      setIsGeneratingAi(false);
+    }
+  };
 
   const quickRemarkTags = [
     "Credentials Verified & Cleared",
@@ -208,9 +248,18 @@ export default function AIDecisionHub({
                 Admission Eligibility Score
               </h4>
               <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">
-                JAMB Score ({jambScore}) exceeds minimum cutoff. Core prerequisites satisfied.
+                JAMB Score ({admissionEval.jambScore}) vs Cutoff ({admissionEval.targetCutoff}). Mathematical admission probability calculated.
               </p>
             </div>
+          </div>
+
+          {/* Formula Score Component Breakdown */}
+          <div className="flex items-center justify-between gap-1 mt-3 pt-2.5 border-t border-slate-200/60 text-[10px] text-slate-500 font-medium">
+            <span>JAMB (60%): <strong className="text-slate-700">{admissionEval.breakdown.jambPoints}/60</strong></span>
+            <span>•</span>
+            <span>WAEC (30%): <strong className="text-slate-700">{admissionEval.breakdown.waecPoints}/30</strong></span>
+            <span>•</span>
+            <span>Merits (10%): <strong className="text-slate-700">{admissionEval.breakdown.meritPoints}/10</strong></span>
           </div>
         </div>
 
@@ -223,7 +272,7 @@ export default function AIDecisionHub({
             <div className="flex items-center justify-between">
               <span className="text-slate-600 flex items-center gap-2">
                 <FontAwesomeIcon icon={faBolt} className="text-[#E8792E] text-[10px]" />
-                UTME Benchmark ({jambScore}/400)
+                UTME Benchmark ({admissionEval.jambScore}/400)
               </span>
               <span className="text-emerald-700 font-bold text-[11px] flex items-center gap-1">
                 <FontAwesomeIcon icon={faCheck} className="text-[10px]" /> Satisfied
@@ -283,7 +332,19 @@ export default function AIDecisionHub({
                 <FontAwesomeIcon icon={faCommentDots} className="text-slate-400" />
                 Quick Insert Remarks
               </label>
-              <span className="text-[10px] text-slate-400">Click to append</span>
+              <button
+                type="button"
+                disabled={isGeneratingAi}
+                onClick={handleGenerateAiRemark}
+                className="text-[11px] font-bold text-[#E8792E] hover:text-[#C96A28] flex items-center gap-1.5 cursor-pointer transition disabled:opacity-50"
+                title="Generate institutional review remarks using Gemini AI"
+              >
+                <FontAwesomeIcon
+                  icon={isGeneratingAi ? faSpinner : faBrain}
+                  className={isGeneratingAi ? "animate-spin" : ""}
+                />
+                <span>{isGeneratingAi ? "Generating..." : "✨ AI Generate Remarks"}</span>
+              </button>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {quickRemarkTags.map((tag, idx) => (

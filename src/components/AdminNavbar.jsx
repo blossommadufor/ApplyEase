@@ -17,8 +17,8 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
   const currentAdmin = useMemo(() => {
     try {
       return JSON.parse(
-        localStorage.getItem("currentUser") ||
-          localStorage.getItem("user") ||
+        sessionStorage.getItem("currentUser") ||
+          sessionStorage.getItem("user") ||
           "{}"
       );
     } catch {
@@ -26,7 +26,7 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
     }
   }, []);
 
-  const userRole = localStorage.getItem("userRole") || currentAdmin.role || "admin";
+  const userRole = sessionStorage.getItem("userRole") || currentAdmin.role || "admin";
   const isSuperAdmin = userRole === "superadmin" || currentAdmin.role === "superadmin";
 
   const adminName =
@@ -35,7 +35,7 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
     (isSuperAdmin ? "ApplyNow Platform Admin" : "Dr. Samuel Adeyemi");
 
   const institutionName =
-    localStorage.getItem("adminInstitution") ||
+    sessionStorage.getItem("adminInstitution") ||
     currentAdmin.institution ||
     (isSuperAdmin ? "ApplyNow Platform Administration" : "University of Lagos (UNILAG)");
 
@@ -43,11 +43,11 @@ export const AdminNavbar = ({ onToggleSidebar, setIsAdminLoggedIn }) => {
     if (typeof setIsAdminLoggedIn === "function") {
       setIsAdminLoggedIn(false);
     }
-    localStorage.removeItem("isAdminLoggedIn");
-    localStorage.removeItem("adminInstitution");
-    localStorage.removeItem("userRole");
-    localStorage.removeItem("currentUser");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("isAdminLoggedIn");
+    sessionStorage.removeItem("adminInstitution");
+    sessionStorage.removeItem("userRole");
+    sessionStorage.removeItem("currentUser");
+    sessionStorage.removeItem("user");
     navigate("/auth", { replace: true });
   };
 

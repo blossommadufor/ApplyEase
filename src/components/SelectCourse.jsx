@@ -43,9 +43,9 @@ export const SelectCourse = () => {
       selectedCourse: selectedCourse.name,
     });
 
-    // 4. Save to localStorage as a safety fallback against refreshes
-    localStorage.setItem("selectedUniversity", university.name);
-    localStorage.setItem("selectedProgram", selectedCourse.name);
+    // 4. Save to sessionStorage as a safety fallback against refreshes
+    sessionStorage.setItem("selectedUniversity", university.name);
+    sessionStorage.setItem("selectedProgram", selectedCourse.name);
 
     navigate("/onboarding/personal-info", {
       state: { universityName: university.name, courseName: selectedCourse.name },

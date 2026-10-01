@@ -16,13 +16,14 @@ import { SelectCourse } from "./components/SelectCourse";
 import { ApplicationsProvider } from "./context/ApplicationsContext";
 import { ApplicationDetails } from "./pages/ApplicationDetails";
 import AdminDashboard from "./pages/AdminDashboard";
+import AdminCourses from "./pages/AdminCourses";
 import StudentDetail from "./pages/StudentDetail";
 import Contact from "./pages/Contact";
 
 // Protected Route Guard for Admin
 function AdminRoute({ isAdminLoggedIn, setIsAdminLoggedIn }) {
   const hasAdmin =
-    isAdminLoggedIn || localStorage.getItem("isAdminLoggedIn") === "true";
+    isAdminLoggedIn || sessionStorage.getItem("isAdminLoggedIn") === "true";
   return hasAdmin ? (
     <AdminLayout setIsAdminLoggedIn={setIsAdminLoggedIn} />
   ) : (
@@ -33,25 +34,46 @@ function AdminRoute({ isAdminLoggedIn, setIsAdminLoggedIn }) {
 // Protected Route Guard for Applicants
 function UserRoute({ isLoggedIn, children }) {
   const hasAuth =
-    isLoggedIn || localStorage.getItem("isLoggedIn") === "true";
+    isLoggedIn || sessionStorage.getItem("isLoggedIn") === "true";
   return hasAuth ? children : <Navigate to="/auth?mode=signin" replace />;
 }
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    return localStorage.getItem("isLoggedIn") === "true";
+    return sessionStorage.getItem("isLoggedIn") === "true";
   });
 
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(() => {
-    return localStorage.getItem("isAdminLoggedIn") === "true";
+    return sessionStorage.getItem("isAdminLoggedIn") === "true";
   });
 
+  // Clean up legacy localStorage auth keys from previous versions
   useEffect(() => {
-    localStorage.setItem("isLoggedIn", isLoggedIn);
+    const legacyKeys = [
+      "isLoggedIn",
+      "isAdminLoggedIn",
+      "currentUser",
+      "user",
+      "userRole",
+      "adminInstitution",
+    ];
+    legacyKeys.forEach((key) => localStorage.removeItem(key));
+  }, []);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      sessionStorage.setItem("isLoggedIn", "true");
+    } else {
+      sessionStorage.removeItem("isLoggedIn");
+    }
   }, [isLoggedIn]);
 
   useEffect(() => {
-    localStorage.setItem("isAdminLoggedIn", isAdminLoggedIn);
+    if (isAdminLoggedIn) {
+      sessionStorage.setItem("isAdminLoggedIn", "true");
+    } else {
+      sessionStorage.removeItem("isAdminLoggedIn");
+    }
   }, [isAdminLoggedIn]);
 
   return (
@@ -111,6 +133,7 @@ export default function App() {
               }
             >
               <Route path="/admin-dashboard" element={<AdminDashboard />} />
+              <Route path="/admin-dashboard/courses" element={<AdminCourses />} />
               <Route path="/admin-dashboard/applications/:id" element={<StudentDetail />} />
             </Route>
 

@@ -11,7 +11,7 @@ export const ApplicationsProvider = ({ children }) => {
   const resolveActiveUser = () => {
     try {
       const stored =
-        localStorage.getItem("currentUser") || localStorage.getItem("user");
+        sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
       return stored ? JSON.parse(stored) : {};
     } catch {
       return {};
@@ -21,7 +21,7 @@ export const ApplicationsProvider = ({ children }) => {
   useEffect(() => {
     let isMounted = true;
     const user = resolveActiveUser();
-    const role = localStorage.getItem("userRole") || user.role || "applicant";
+    const role = sessionStorage.getItem("userRole") || user.role || "applicant";
     const userEmail = (user.email || user.contactEmail || "").toLowerCase().trim();
 
     const fetchPromise =
@@ -62,7 +62,7 @@ export const ApplicationsProvider = ({ children }) => {
   const refreshApplications = async (explicitEmail) => {
     try {
       const user = resolveActiveUser();
-      const role = localStorage.getItem("userRole") || user.role || "applicant";
+      const role = sessionStorage.getItem("userRole") || user.role || "applicant";
       const userEmail =
         explicitEmail || (user.email || user.contactEmail || "").toLowerCase().trim();
 
@@ -138,6 +138,22 @@ export const ApplicationsProvider = ({ children }) => {
     }
   };
 
+  // Delete application
+  const deleteApplication = async (id) => {
+    // Optimistically update UI
+    setApplications((prev) => prev.filter((app) => String(app.id) !== String(id)));
+
+    try {
+      await applicationsAPI.delete(id);
+      return true;
+    } catch (err) {
+      console.error(`Error deleting application ${id}:`, err);
+      // Re-sync on failure
+      refreshApplications();
+      return false;
+    }
+  };
+
   return (
     <ApplicationsContext.Provider
       value={{
@@ -146,6 +162,7 @@ export const ApplicationsProvider = ({ children }) => {
         error,
         addApplication,
         updateStatus,
+        deleteApplication,
         refreshApplications,
       }}
     >

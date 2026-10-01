@@ -112,19 +112,19 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
             institution: role === "admin" ? values.institution : "",
           });
 
-          // Establish active authenticated session
-          setIsLoggedIn(true);
-          localStorage.setItem("isLoggedIn", "true");
-          localStorage.setItem("currentUser", JSON.stringify(newUser));
-          localStorage.setItem("user", JSON.stringify(newUser));
-          localStorage.setItem("userRole", role);
+          // Establish active authenticated session in sessionStorage
+          sessionStorage.setItem("currentUser", JSON.stringify(newUser));
+          sessionStorage.setItem("user", JSON.stringify(newUser));
+          sessionStorage.setItem("userRole", role);
 
           if (role === "admin") {
             if (setIsAdminLoggedIn) setIsAdminLoggedIn(true);
-            localStorage.setItem("isAdminLoggedIn", "true");
-            localStorage.setItem("adminInstitution", values.institution);
+            sessionStorage.setItem("isAdminLoggedIn", "true");
+            sessionStorage.setItem("adminInstitution", values.institution);
             navigate("/admin-dashboard", { replace: true });
           } else {
+            if (setIsLoggedIn) setIsLoggedIn(true);
+            sessionStorage.setItem("isLoggedIn", "true");
             navigate("/dashboard", { replace: true });
           }
         } else {
@@ -150,21 +150,23 @@ export const AuthPage = ({ setIsLoggedIn, setIsAdminLoggedIn }) => {
             name: rawName,
             firstName: rawName ? rawName.split(" ")[0] : "",
           };
-          setIsLoggedIn(true);
-          localStorage.setItem("isLoggedIn", "true");
-          localStorage.setItem("currentUser", JSON.stringify(user));
-          localStorage.setItem("user", JSON.stringify(user));
-          localStorage.setItem("userRole", user.role);
+
+          // Establish authenticated session in sessionStorage
+          sessionStorage.setItem("currentUser", JSON.stringify(user));
+          sessionStorage.setItem("user", JSON.stringify(user));
+          sessionStorage.setItem("userRole", user.role);
 
           if (user.role === "admin" || user.role === "superadmin") {
             if (setIsAdminLoggedIn) setIsAdminLoggedIn(true);
-            localStorage.setItem("isAdminLoggedIn", "true");
-            localStorage.setItem(
+            sessionStorage.setItem("isAdminLoggedIn", "true");
+            sessionStorage.setItem(
               "adminInstitution",
               user.institution || values.institution || "ApplyNow Headquarters"
             );
             navigate("/admin-dashboard", { replace: true });
           } else {
+            if (setIsLoggedIn) setIsLoggedIn(true);
+            sessionStorage.setItem("isLoggedIn", "true");
             navigate("/dashboard", { replace: true });
           }
         }

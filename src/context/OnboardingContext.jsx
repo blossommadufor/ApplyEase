@@ -5,20 +5,20 @@ const OnboardingContext = createContext();
 export function OnboardingProvider({ children }) {
   const [formData, setFormData] = useState(() => {
     try {
-      const savedData = localStorage.getItem("onboarding_form_data");
+      const savedData = sessionStorage.getItem("onboarding_form_data");
       return savedData ? JSON.parse(savedData) : {};
     } catch (error) {
-      console.error("Failed to load form data from localStorage", error);
+      console.error("Failed to load form data from sessionStorage", error);
       return {};
     }
   });
 
-  //  Automatically save to localStorage whenever formData changes
+  //  Automatically save to sessionStorage whenever formData changes
   useEffect(() => {
     try {
-      localStorage.setItem("onboarding_form_data", JSON.stringify(formData));
+      sessionStorage.setItem("onboarding_form_data", JSON.stringify(formData));
     } catch (error) {
-      console.error("Failed to save form data to localStorage", error);
+      console.error("Failed to save form data to sessionStorage", error);
     }
   }, [formData]);
 
@@ -30,7 +30,7 @@ export function OnboardingProvider({ children }) {
   const clearFormData = () => {
     setFormData({});
     try {
-      localStorage.removeItem("onboarding_form_data");
+      sessionStorage.removeItem("onboarding_form_data");
     } catch (error) {
       console.error("Failed to clear onboarding_form_data", error);
     }

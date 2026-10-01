@@ -14,17 +14,21 @@ import {
   faFolderOpen,
   faChevronRight,
   faSpinner,
+  faTrashCan,
+  faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 
 export const ApplicationDashboard = () => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("applications");
-  const { applications } = useApplications();
+  const { applications, deleteApplication } = useApplications();
+  const [appToDelete, setAppToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const currentUser = (() => {
     try {
       const stored =
-        localStorage.getItem("currentUser") || localStorage.getItem("user");
+        sessionStorage.getItem("currentUser") || sessionStorage.getItem("user");
       return stored ? JSON.parse(stored) : {};
     } catch {
       return {};
@@ -41,6 +45,20 @@ export const ApplicationDashboard = () => {
 
   const [fetchedApplications, setFetchedApplications] = useState([]);
   const [isFetching, setIsFetching] = useState(() => Boolean(currentEmail));
+
+  const handleConfirmDelete = async () => {
+    if (!appToDelete) return;
+    setIsDeleting(true);
+    const targetId = appToDelete.id;
+    const success = await deleteApplication(targetId);
+    if (success) {
+      setFetchedApplications((prev) =>
+        prev.filter((a) => String(a.id) !== String(targetId))
+      );
+    }
+    setIsDeleting(false);
+    setAppToDelete(null);
+  };
 
   // Directly fetch only the applications linked strictly to this user's email
   useEffect(() => {
@@ -195,12 +213,25 @@ export const ApplicationDashboard = () => {
                         <span className="text-xs font-mono bg-slate-100 text-slate-600 px-2.5 py-1 rounded-md font-medium">
                           #{app.id}
                         </span>
-                        <span
-                          className={`text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 ${statusConfig.bg}`}
-                        >
-                          <FontAwesomeIcon icon={statusConfig.icon} className="text-[11px]" />
-                          <span>{status}</span>
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span
+                            className={`text-xs px-2.5 py-1 rounded-full font-medium flex items-center gap-1.5 ${statusConfig.bg}`}
+                          >
+                            <FontAwesomeIcon icon={statusConfig.icon} className="text-[11px]" />
+                            <span>{status}</span>
+                          </span>
+                          <button
+                            type="button"
+                            title="Withdraw Application"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setAppToDelete(app);
+                            }}
+                            className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                          >
+                            <FontAwesomeIcon icon={faTrashCan} className="text-xs" />
+                          </button>
+                        </div>
                       </div>
 
                       {/* Course / Program Title */}
@@ -242,9 +273,22 @@ export const ApplicationDashboard = () => {
                     </div>
 
                     {/* Card Footer Link */}
-                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-medium text-[#E8792E] group-hover:translate-x-0.5 transition-transform">
-                      <span>View Dossier & Status</span>
-                      <FontAwesomeIcon icon={faChevronRight} className="text-[11px]" />
+                    <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-medium">
+                      <div className="text-[#E8792E] group-hover:translate-x-0.5 transition-transform flex items-center gap-1">
+                        <span>View Dossier & Status</span>
+                        <FontAwesomeIcon icon={faChevronRight} className="text-[11px]" />
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAppToDelete(app);
+                        }}
+                        className="text-slate-400 hover:text-rose-600 transition flex items-center gap-1.5 py-1 px-2 rounded-md hover:bg-rose-50 cursor-pointer"
+                      >
+                        <FontAwesomeIcon icon={faTrashCan} className="text-[10px]" />
+                        <span>Withdraw</span>
+                      </button>
                     </div>
                   </div>
                 );
@@ -275,6 +319,59 @@ export const ApplicationDashboard = () => {
           </div>
         )}
       </div>
+
+      {/* Withdraw / Delete Confirmation Modal */}
+      {appToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-fadeIn">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 space-y-6 text-center">
+            <div className="w-16 h-16 rounded-2xl bg-rose-50 border border-rose-100 text-rose-600 flex items-center justify-center mx-auto text-2xl">
+              <FontAwesomeIcon icon={faTriangleExclamation} />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-[#1F2430]">Withdraw Application?</h3>
+              <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+                Are you sure you want to withdraw your application for{" "}
+                <strong className="text-slate-800">
+                  {appToDelete.program || appToDelete.course}
+                </strong>{" "}
+                at{" "}
+                <strong className="text-slate-800">
+                  {appToDelete.university}
+                </strong>
+                ? This action cannot be undone and your screening dossier will be removed.
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3 pt-2">
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={() => setAppToDelete(null)}
+                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs sm:text-sm font-semibold transition cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="w-full sm:flex-1 py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs sm:text-sm font-semibold shadow-xs transition flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+              >
+                {isDeleting ? (
+                  <>
+                    <FontAwesomeIcon icon={faSpinner} className="animate-spin text-sm" />
+                    <span>Withdrawing...</span>
+                  </>
+                ) : (
+                  <>
+                    <FontAwesomeIcon icon={faTrashCan} className="text-sm" />
+                    <span>Yes, Withdraw</span>
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

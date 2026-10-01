@@ -47,7 +47,7 @@ export const PersonalInfo = () => {
 
   const activeUser = (() => {
     try {
-      return JSON.parse(localStorage.getItem("currentUser") || "{}");
+      return JSON.parse(sessionStorage.getItem("currentUser") || sessionStorage.getItem("user") || "{}");
     } catch {
       return {};
     }
@@ -82,8 +82,8 @@ export const PersonalInfo = () => {
         nin: values.nin,
       });
 
-      localStorage.setItem("applicantName", full);
-      localStorage.setItem("applicantEmail", values.contactEmail);
+      sessionStorage.setItem("applicantName", full);
+      sessionStorage.setItem("applicantEmail", values.contactEmail);
 
       navigate("/onboarding/academic-details");
     },

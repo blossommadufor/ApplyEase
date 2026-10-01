@@ -23,8 +23,10 @@ export const StudentNavbar = ({ setIsLoggedIn }) => {
     if (typeof setIsLoggedIn === "function") {
       setIsLoggedIn(false);
     }
-    localStorage.removeItem("isLoggedIn");
-    localStorage.removeItem("user");
+    sessionStorage.removeItem("isLoggedIn");
+    sessionStorage.removeItem("user");
+    sessionStorage.removeItem("currentUser");
+    sessionStorage.removeItem("userRole");
     closeMenu();
     navigate("/", { replace: true });
   };
